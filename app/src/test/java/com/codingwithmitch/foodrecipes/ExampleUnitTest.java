@@ -1,4 +1,4 @@
-package com.codingwithmitch.restapimvvm;
+package com.codingwithmitch.foodrecipes;
 
 import org.junit.Test;
 
