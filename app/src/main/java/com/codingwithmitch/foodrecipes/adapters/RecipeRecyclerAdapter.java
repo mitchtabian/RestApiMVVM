@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.R;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
@@ -35,6 +37,15 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
 
         // set the image
+        RequestOptions options = new RequestOptions()
+                .centerCrop()
+                .error(R.drawable.ic_launcher_background);
+
+        Glide.with(((RecipeViewholder)viewHolder).itemView)
+                .setDefaultRequestOptions(options)
+                .load(mRecipes.get(i).getImage_url())
+                .into(((RecipeViewholder)viewHolder).image);
+
 
         ((RecipeViewholder)viewHolder).title.setText(mRecipes.get(i).getTitle());
         ((RecipeViewholder)viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
