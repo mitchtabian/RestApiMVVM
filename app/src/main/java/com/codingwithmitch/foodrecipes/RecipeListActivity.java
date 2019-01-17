@@ -1,12 +1,15 @@
 package com.codingwithmitch.foodrecipes;
 
 
+import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -37,7 +40,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
 
         initRecyclerView();
         subscribeObservers();
-        mRecipeListViewModel.search("barbeque", 1);
+        initSearchView();
     }
 
     private void initRecyclerView(){
@@ -53,6 +56,29 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
             public void onChanged(@Nullable List<Recipe> recipes) {
                 Log.d(TAG, "onChanged: updating list with new recipes. Num recipes: " + recipes.size());
                 mAdapter.setRecipes(recipes);
+            }
+        });
+    }
+
+    private void initSearchView(){
+        SearchView searchView = findViewById(R.id.search_view);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Log.d(TAG, "onQueryTextSubmit: " + query);
+
+                // Search the database for a recipe
+                mRecipeListViewModel.search(query, 0);
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String query) {
+
+                // Wait for the user to submit the search. So do nothing here.
+
+                return false;
             }
         });
     }
