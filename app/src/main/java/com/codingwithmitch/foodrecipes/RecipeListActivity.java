@@ -5,34 +5,45 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.widget.TextView;
 
 
+import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeListViewModel;
 
 import java.util.List;
 
 
-public class RecipeListActivity extends BaseActivity {
+public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAdapter.OnRecipeListener {
 
     private static final String TAG = "RecipeListActivity";
 
     private RecipeListViewModel mRecipeListViewModel;
 
-    private TextView mTest;
+    private RecyclerView mRecyclerView;
+    private RecipeRecyclerAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_list);
-        mTest = findViewById(R.id.test);
+        mRecyclerView = findViewById(R.id.recipe_list);
 
         mRecipeListViewModel = ViewModelProviders.of(this).get(RecipeListViewModel.class);
 
+        initRecyclerView();
         subscribeObservers();
-
         mRecipeListViewModel.search("barbeque", 1);
+    }
+
+    private void initRecyclerView(){
+        mAdapter = new RecipeRecyclerAdapter(this);
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void subscribeObservers(){
@@ -40,17 +51,17 @@ public class RecipeListActivity extends BaseActivity {
         mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                StringBuilder sb = new StringBuilder();
-                for(Recipe recipe: recipes){
-                    sb.append(recipe.getTitle() + "\n");
-                }
-                mTest.setText(sb.toString());
+                Log.d(TAG, "onChanged: updating list with new recipes. Num recipes: " + recipes.size());
+                mAdapter.setRecipes(recipes);
             }
         });
     }
 
 
-
+    @Override
+    public void onRecipeClick(int position) {
+        Log.d(TAG, "onRecipeClick: clicked a recipe at position: " + position);
+    }
 }
 
 
