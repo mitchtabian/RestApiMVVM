@@ -7,15 +7,18 @@ import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 import java.util.List;
 
 public class RecipeListViewModel extends AndroidViewModel {
 
+    private RecipeRepository mRecipeRepository;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
 
     public RecipeListViewModel(@NonNull Application application) {
         super(application);
+        mRecipeRepository = RecipeRepository.getInstance(application);
     }
 
     public LiveData<List<Recipe>> getRecipes() {
@@ -30,6 +33,11 @@ public class RecipeListViewModel extends AndroidViewModel {
         // 4) Any observers in RecipeListActivity will be automatically updated
 
         mRecipes.setValue(recipes);
+    }
+
+
+    public void search(String query, int pageNumber){
+        mRecipeRepository.searchApi(query, pageNumber);
     }
 }
 
