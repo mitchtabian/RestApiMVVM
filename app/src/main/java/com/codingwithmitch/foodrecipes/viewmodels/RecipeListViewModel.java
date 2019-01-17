@@ -7,11 +7,14 @@ import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 import java.util.List;
 
-public class RecipeListViewModel extends AndroidViewModel {
+public class RecipeListViewModel extends AndroidViewModel implements
+        RecipeListCallback
+{
 
     private RecipeRepository mRecipeRepository;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
@@ -19,12 +22,14 @@ public class RecipeListViewModel extends AndroidViewModel {
     public RecipeListViewModel(@NonNull Application application) {
         super(application);
         mRecipeRepository = RecipeRepository.getInstance(application);
+        mRecipeRepository.setRecipeListCallback(this);
     }
 
     public LiveData<List<Recipe>> getRecipes() {
         return mRecipes;
     }
 
+    @Override
     public void setRecipes(List<Recipe> recipes) {
 
         // 1) make http request using Retrofit to retrieve the data

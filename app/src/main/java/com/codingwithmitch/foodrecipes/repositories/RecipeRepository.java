@@ -25,6 +25,7 @@ public class RecipeRepository {
 
     private static RecipeRepository instance;
     private RecipeApi mRecipeApi;
+    private RecipeListCallback mRecipeListCallback;
 
     public static RecipeRepository getInstance(Application application){
         if(instance == null){
@@ -36,6 +37,10 @@ public class RecipeRepository {
 
     public RecipeRepository(RecipeApi recipeApi) {
         mRecipeApi = recipeApi;
+    }
+
+    public void setRecipeListCallback(RecipeListCallback callback){
+        mRecipeListCallback = callback;
     }
 
     public void searchApi(String query, int pageNumber){
@@ -55,6 +60,7 @@ public class RecipeRepository {
             if(response.code() == 200){
                 Log.d(TAG, "onResponse: " + response.body().toString());
                 List<Recipe> recipes = new ArrayList<>(response.body().getRecipes());
+                mRecipeListCallback.setRecipes(recipes);
                 for(Recipe recipe: recipes){
                     Log.d(TAG, "onResponse: " + recipe.toString());
                 }
