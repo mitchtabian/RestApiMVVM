@@ -97,6 +97,8 @@ public class RecipeRepository implements RequestCancelListener{
             else {
                 try {
                     Log.d(TAG, "onResponse: " + response.errorBody().string());
+                    mRecipeCallback.onError(null);
+                    return;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -106,7 +108,7 @@ public class RecipeRepository implements RequestCancelListener{
 
         @Override
         public void onFailure(Call<RecipeResponse> call, Throwable t) {
-
+            mRecipeCallback.onError(t);
         }
     };
 

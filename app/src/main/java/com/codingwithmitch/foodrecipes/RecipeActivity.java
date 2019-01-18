@@ -66,6 +66,37 @@ public class RecipeActivity extends BaseActivity{
                 setRecipeProperties(recipe);
             }
         });
+
+        mRecipeViewModel.getQueryError().observe(this, new Observer<Throwable>() {
+            @Override
+            public void onChanged(@Nullable Throwable throwable) {
+                showProgressBar(false);
+                displayErrorScreen(throwable);
+            }
+        });
+    }
+
+    private void displayErrorScreen(Throwable t){
+        mRecipeTitle.setText("Error retrieving recipe...");
+        TextView textView = new TextView(this);
+        if(t != null){
+            textView.setText(t.getMessage());
+        }
+        else{
+            textView.setText("Error");
+        }
+        textView.setTextSize(15);
+        textView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        mRecipeIngredientsContainer.addView(textView);
+        RequestOptions options = new RequestOptions()
+                .error(R.drawable.ic_launcher_background);
+        Glide.with(this)
+                .setDefaultRequestOptions(options)
+                .load(R.drawable.ic_launcher_background)
+                .into(mRecipeImage);
+        showParent();
     }
 
 

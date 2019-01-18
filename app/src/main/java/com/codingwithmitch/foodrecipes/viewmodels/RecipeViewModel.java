@@ -12,6 +12,7 @@ import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 public class RecipeViewModel extends AndroidViewModel implements RecipeCallback {
 
+    private MutableLiveData<Throwable> mQueryError = new MutableLiveData<>();
     private MutableLiveData<Recipe> mRecipe  = new MutableLiveData<>();
     private RecipeRepository mRecipeRepository;
 
@@ -25,6 +26,10 @@ public class RecipeViewModel extends AndroidViewModel implements RecipeCallback 
         return mRecipe;
     }
 
+    public LiveData<Throwable> getQueryError(){
+        return mQueryError;
+    }
+
     public void search(String recipeId) {
         mRecipeRepository.searchForRecipe(recipeId);
     }
@@ -33,7 +38,16 @@ public class RecipeViewModel extends AndroidViewModel implements RecipeCallback 
     public void setRecipe(Recipe recipe) {
         mRecipe.setValue(recipe);
     }
+
+    @Override
+    public void onError(Throwable t) {
+        mQueryError.setValue(t);
+    }
 }
+
+
+
+
 
 
 
