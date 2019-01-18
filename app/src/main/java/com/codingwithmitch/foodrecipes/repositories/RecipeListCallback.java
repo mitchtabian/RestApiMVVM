@@ -7,4 +7,8 @@ import java.util.List;
 public interface RecipeListCallback {
 
     void setRecipes(List<Recipe> recipes);
+
+    void onQueryStart();
+
+    void onQueryDone();
 }

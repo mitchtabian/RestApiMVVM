@@ -72,8 +72,9 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
                 Log.d(TAG, "onQueryTextSubmit: " + query);
 
                 // Search the database for a recipe
-				mRecipeListViewModel.setIsViewingRecipes(true);
+                mRecipeListViewModel.setIsViewingRecipes(true);
                 mRecipeListViewModel.search(query, 0);
+                mRecyclerView.requestFocus();
 
                 return false;
             }
@@ -102,12 +103,18 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
 
     @Override
     public void onBackPressed() {
-        if(mRecipeListViewModel.getIsViewingRecipes()){
+        Log.d(TAG, "onBackPressed: called.");
+        if(mRecipeListViewModel.getIsPerformingQuery()){
+            mRecipeListViewModel.cancelQuery();
             mRecipeListViewModel.displaySearchCategories();
-        }else{
-            super.onBackPressed();
         }
-
+        else{
+            if(mRecipeListViewModel.getIsViewingRecipes()){
+                mRecipeListViewModel.displaySearchCategories();
+            }else{
+                super.onBackPressed();
+            }
+        }
     }
 }
 

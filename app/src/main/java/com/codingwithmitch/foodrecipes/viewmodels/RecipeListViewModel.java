@@ -9,10 +9,13 @@ import android.support.annotation.NonNull;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
 
 public class RecipeListViewModel extends AndroidViewModel implements
         RecipeListCallback
@@ -20,6 +23,7 @@ public class RecipeListViewModel extends AndroidViewModel implements
 
     private RecipeRepository mRecipeRepository;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
+    private boolean mIsPerformingQuery;
     private boolean mIsViewingRecipes;
 
     public RecipeListViewModel(@NonNull Application application) {
@@ -38,6 +42,14 @@ public class RecipeListViewModel extends AndroidViewModel implements
 
     public void setIsViewingRecipes(boolean isViewingRecipes) {
         this.mIsViewingRecipes = isViewingRecipes;
+    }
+
+    public boolean getIsPerformingQuery(){
+        return mIsPerformingQuery;
+    }
+
+    public void cancelQuery(){
+        mRecipeRepository.onCancel();
     }
 
     @Override
@@ -75,6 +87,16 @@ public class RecipeListViewModel extends AndroidViewModel implements
     public void search(String query, int pageNumber){
         displayLoadingScreen();
         mRecipeRepository.searchApi(query, pageNumber);
+    }
+
+    @Override
+    public void onQueryStart(){
+        mIsPerformingQuery = true;
+    }
+
+    @Override
+    public void onQueryDone(){
+        mIsPerformingQuery = false;
     }
 }
 
