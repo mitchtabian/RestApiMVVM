@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.util.VerticalSpacingItemDecorator;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeListViewModel;
 
 import java.util.List;
@@ -46,6 +47,8 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
 
     private void initRecyclerView(){
         mAdapter = new RecipeRecyclerAdapter(this);
+        VerticalSpacingItemDecorator itemDecorator = new VerticalSpacingItemDecorator(30);
+        mRecyclerView.addItemDecoration(itemDecorator);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
