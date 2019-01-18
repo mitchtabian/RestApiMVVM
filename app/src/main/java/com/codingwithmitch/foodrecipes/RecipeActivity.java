@@ -1,5 +1,7 @@
 package com.codingwithmitch.foodrecipes;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
@@ -9,6 +11,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
 
 public class RecipeActivity extends BaseActivity{
 
@@ -21,7 +24,8 @@ public class RecipeActivity extends BaseActivity{
     private LinearLayout mRecipeIngredientsContainer;
     private ScrollView mParent;
 
-	private RecipeViewModel mRecipeViewModel;
+    private RecipeViewModel mRecipeViewModel;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,17 +37,31 @@ public class RecipeActivity extends BaseActivity{
         mRecipeIngredientsContainer = findViewById(R.id.ingredients_container);
         mParent = findViewById(R.id.parent);
 
-		mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
-		
+        mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
+
         getIncomingIntent();
+        subscribeObservers();
     }
 
     private void getIncomingIntent(){
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
 
-            Log.d(TAG, "getIncomingIntent: " + recipe.toString());
+            if(recipe != null){
+                mRecipeViewModel.search(recipe.getRecipe_id());
+            }
+
         }
+    }
+
+
+    private void subscribeObservers(){
+        mRecipeViewModel.getRecipe().observe(this, new Observer<Recipe>() {
+            @Override
+            public void onChanged(@Nullable Recipe recipe) {
+                Log.d(TAG, "onChanged: " + recipe.toString());
+            }
+        });
     }
 }
 

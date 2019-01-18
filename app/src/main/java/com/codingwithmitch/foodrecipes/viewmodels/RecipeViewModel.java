@@ -7,19 +7,31 @@ import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.repositories.RecipeCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
-public class RecipeViewModel extends AndroidViewModel {
+public class RecipeViewModel extends AndroidViewModel implements RecipeCallback {
 
     private MutableLiveData<Recipe> mRecipe  = new MutableLiveData<>();
     private RecipeRepository mRecipeRepository;
 
     public RecipeViewModel(@NonNull Application application) {
         super(application);
+        mRecipeRepository = RecipeRepository.getInstance(application);
+        mRecipeRepository.setRecipeCallback(this);
     }
 
     public LiveData<Recipe> getRecipe(){
         return mRecipe;
+    }
+
+    public void search(String recipeId) {
+        mRecipeRepository.searchForRecipe(recipeId);
+    }
+
+    @Override
+    public void setRecipe(Recipe recipe) {
+        mRecipe.setValue(recipe);
     }
 }
 

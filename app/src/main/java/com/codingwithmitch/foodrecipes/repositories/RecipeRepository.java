@@ -26,6 +26,7 @@ public class RecipeRepository implements RequestCancelListener{
     private static RecipeRepository instance;
     private RecipeApi mRecipeApi;
     private RecipeListCallback mRecipeListCallback;
+    private RecipeCallback mRecipeCallback;
     private String mQuery;
     private int mPageNumber;
 
@@ -44,6 +45,10 @@ public class RecipeRepository implements RequestCancelListener{
         mRecipeApi = recipeApi;
         mQuery = "";
         mPageNumber = 0;
+    }
+
+    public void setRecipeCallback(RecipeCallback callback){
+        this.mRecipeCallback = callback;
     }
 
     public void setRecipeListCallback(RecipeListCallback callback){
@@ -68,6 +73,42 @@ public class RecipeRepository implements RequestCancelListener{
     public void searchNextPage(){
         searchApi(mQuery, mPageNumber + 1);
     }
+
+
+    public void searchForRecipe(String recipeId){
+        Call<RecipeResponse> responseCall = mRecipeApi
+                .getRecipe(
+                        Constants.API_KEY,
+                        recipeId
+                );
+
+        responseCall.enqueue(singleRecipeCallback);
+    }
+
+    /**
+     * Callback for retrieving a single recipe given a recipe id.
+     */
+    private Callback<RecipeResponse>  singleRecipeCallback = new Callback<RecipeResponse>() {
+        @Override
+        public void onResponse(Call<RecipeResponse> call, Response<RecipeResponse> response) {
+            if(response.code() == 200){
+                Log.d(TAG, "onResponse: " + response.body().toString());
+            }
+            else {
+                try {
+                    Log.d(TAG, "onResponse: " + response.errorBody().string());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            mRecipeCallback.setRecipe(response.body().getRecipe());
+        }
+
+        @Override
+        public void onFailure(Call<RecipeResponse> call, Throwable t) {
+
+        }
+    };
 
 
     private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
