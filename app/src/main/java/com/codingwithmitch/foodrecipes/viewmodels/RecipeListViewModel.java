@@ -10,6 +10,7 @@ import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecipeListViewModel extends AndroidViewModel implements
@@ -40,8 +41,16 @@ public class RecipeListViewModel extends AndroidViewModel implements
         mRecipes.setValue(recipes);
     }
 
+    private void displayLoadingScreen(){
+        Recipe recipe = new Recipe();
+        recipe.setTitle("LOADING...");
+        List<Recipe> loadingList = new ArrayList<>();
+        loadingList.add(recipe);
+        mRecipes.setValue(loadingList);
+    }
 
     public void search(String query, int pageNumber){
+        displayLoadingScreen();
         mRecipeRepository.searchApi(query, pageNumber);
     }
 }

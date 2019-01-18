@@ -18,6 +18,8 @@ import java.util.List;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    private static final int RECIPE_TYPE = 1;
+    private static final int LOADING_TYPE = 2;
 
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
@@ -29,27 +31,58 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
-        return new RecipeViewholder(view, mOnRecipeListener);
+
+        View view = null;
+
+        switch (i) { // i is the view type constant
+            case RECIPE_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
+                return new RecipeViewholder(view, mOnRecipeListener);
+            }
+
+            case LOADING_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_loading_list_item, viewGroup, false);
+                return new LoadingViewHolder(view);
+            }
+
+
+            default:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
+                return new RecipeViewholder(view, mOnRecipeListener);
+            }
+        }
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
 
-        // set the image
-        RequestOptions options = new RequestOptions()
-                .centerCrop()
-                .error(R.drawable.ic_launcher_background);
+        int itemViewType = getItemViewType(i);
+        if(itemViewType == RECIPE_TYPE) {
+            // set the image
+            RequestOptions options = new RequestOptions()
+                    .centerCrop()
+                    .error(R.drawable.ic_launcher_background);
 
-        Glide.with(((RecipeViewholder)viewHolder).itemView)
-                .setDefaultRequestOptions(options)
-                .load(mRecipes.get(i).getImage_url())
-                .into(((RecipeViewholder)viewHolder).image);
+            Glide.with(((RecipeViewholder) viewHolder).itemView)
+                    .setDefaultRequestOptions(options)
+                    .load(mRecipes.get(i).getImage_url())
+                    .into(((RecipeViewholder) viewHolder).image);
 
 
-        ((RecipeViewholder)viewHolder).title.setText(mRecipes.get(i).getTitle());
-        ((RecipeViewholder)viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
-        ((RecipeViewholder)viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+            ((RecipeViewholder) viewHolder).title.setText(mRecipes.get(i).getTitle());
+            ((RecipeViewholder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
+            ((RecipeViewholder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if(mRecipes.get(position).getTitle().equals("LOADING...")){
+            return LOADING_TYPE;
+        }
+        else{
+            return RECIPE_TYPE;
+        }
     }
 
     @Override
@@ -63,6 +96,13 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void setRecipes(List<Recipe> recipes){
         mRecipes = recipes;
         notifyDataSetChanged();
+    }
+
+    public class LoadingViewHolder extends RecyclerView.ViewHolder {
+
+        public LoadingViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
     }
 
     /**
