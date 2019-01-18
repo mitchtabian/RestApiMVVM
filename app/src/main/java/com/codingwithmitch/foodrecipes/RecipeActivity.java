@@ -21,6 +21,7 @@ public class RecipeActivity extends BaseActivity{
     private LinearLayout mRecipeIngredientsContainer;
     private ScrollView mParent;
 
+	private RecipeViewModel mRecipeViewModel;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,6 +33,8 @@ public class RecipeActivity extends BaseActivity{
         mRecipeIngredientsContainer = findViewById(R.id.ingredients_container);
         mParent = findViewById(R.id.parent);
 
+		mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
+		
         getIncomingIntent();
     }
 
