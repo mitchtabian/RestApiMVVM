@@ -95,7 +95,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
 
     @Override
     public void onCategoryClick(String category) {
-
+        mRecipeListViewModel.search(category, 0);
     }
 }
 
