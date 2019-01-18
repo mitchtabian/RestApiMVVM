@@ -20,6 +20,7 @@ public class RecipeListViewModel extends AndroidViewModel implements
 
     private RecipeRepository mRecipeRepository;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
+    private boolean mIsViewingRecipes;
 
     public RecipeListViewModel(@NonNull Application application) {
         super(application);
@@ -29,6 +30,14 @@ public class RecipeListViewModel extends AndroidViewModel implements
 
     public LiveData<List<Recipe>> getRecipes() {
         return mRecipes;
+    }
+
+    public boolean getIsViewingRecipes() {
+        return mIsViewingRecipes;
+    }
+
+    public void setIsViewingRecipes(boolean isViewingRecipes) {
+        this.mIsViewingRecipes = isViewingRecipes;
     }
 
     @Override
@@ -43,6 +52,7 @@ public class RecipeListViewModel extends AndroidViewModel implements
     }
 
     public void displaySearchCategories(){
+        mIsViewingRecipes = false;
         List<Recipe> categories = new ArrayList<>();
         for(int i = 0; i < Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
             Recipe recipe = new Recipe();
