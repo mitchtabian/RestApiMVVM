@@ -70,42 +70,6 @@ public class RecipeRepository implements RequestCancelListener{
     }
 
 
-    public void searchForRecipe(String recipeId){
-        Call<RecipeResponse> responseCall = mRecipeApi
-                .getRecipe(
-                        Constants.API_KEY,
-                        recipeId
-                );
-
-        responseCall.enqueue(singleRecipeCallback);
-    }
-    
-    /**
-     * Callback for retrieving a single recipe given a recipe id.
-     */
-    private Callback<RecipeResponse>  singleRecipeCallback = new Callback<RecipeResponse>() {
-        @Override
-        public void onResponse(Call<RecipeResponse> call, Response<RecipeResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }
-
-        @Override
-        public void onFailure(Call<RecipeResponse> call, Throwable t) {
-
-        }
-    };
-
-
     private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
         @Override
         public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
