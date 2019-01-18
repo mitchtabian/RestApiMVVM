@@ -5,6 +5,7 @@ import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -110,6 +111,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
     @Override
     public void onRecipeClick(int position) {
         Log.d(TAG, "onRecipeClick: clicked a recipe at position: " + position);
+
     }
 
     @Override
