@@ -41,6 +41,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         initRecyclerView();
         subscribeObservers();
         initSearchView();
+        mRecipeListViewModel.displaySearchCategories();
     }
 
     private void initRecyclerView(){
@@ -87,6 +88,11 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
     @Override
     public void onRecipeClick(int position) {
         Log.d(TAG, "onRecipeClick: clicked a recipe at position: " + position);
+    }
+
+    @Override
+    public void onCategoryClick(String category) {
+
     }
 }
 

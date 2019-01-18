@@ -16,10 +16,13 @@ import com.codingwithmitch.foodrecipes.models.Recipe;
 
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int RECIPE_TYPE = 1;
     private static final int LOADING_TYPE = 2;
+    private static final int CATEGORY_TYPE = 3;
 
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
@@ -45,6 +48,10 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 return new LoadingViewHolder(view);
             }
 
+            case CATEGORY_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
+                return new CategoryViewHolder(view, mOnRecipeListener);
+            }
 
             default:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
@@ -73,11 +80,26 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             ((RecipeViewholder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
             ((RecipeViewholder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
         }
+        else if(itemViewType == CATEGORY_TYPE){
+            RequestOptions options = new RequestOptions()
+                    .centerCrop()
+                    .error(R.drawable.ic_launcher_background);
+
+            Glide.with(((CategoryViewHolder)viewHolder).itemView)
+                    .setDefaultRequestOptions(options)
+                    .load(mRecipes.get(i).getImage_url())
+                    .into(((CategoryViewHolder)viewHolder).categoryImage);
+
+            ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
+        }
     }
 
     @Override
     public int getItemViewType(int position) {
-        if(mRecipes.get(position).getTitle().equals("LOADING...")){
+        if(mRecipes.get(position).getSocial_rank() == -1){
+            return CATEGORY_TYPE;
+        }
+        else if(mRecipes.get(position).getTitle().equals("LOADING...")){
             return LOADING_TYPE;
         }
         else{
@@ -96,6 +118,31 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void setRecipes(List<Recipe> recipes){
         mRecipes = recipes;
         notifyDataSetChanged();
+    }
+
+    /**
+     * ViewHolder for search categories
+     */
+    public class CategoryViewHolder extends RecyclerView.ViewHolder implements
+            View.OnClickListener
+    {
+        CircleImageView categoryImage;
+        TextView categoryTitle;
+        OnRecipeListener listener;
+
+        public CategoryViewHolder(@NonNull View itemView, OnRecipeListener onRecipeListener) {
+            super(itemView);
+            categoryImage = itemView.findViewById(R.id.category_image);
+            categoryTitle = itemView.findViewById(R.id.category_title);
+            listener = onRecipeListener;
+
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            listener.onCategoryClick(categoryTitle.getText().toString());
+        }
     }
 
     public class LoadingViewHolder extends RecyclerView.ViewHolder {
@@ -135,6 +182,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     public interface OnRecipeListener{
         void onRecipeClick(int position);
+        void onCategoryClick(String category);
     }
 
 }

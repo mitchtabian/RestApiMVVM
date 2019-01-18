@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
+import com.codingwithmitch.foodrecipes.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,18 @@ public class RecipeListViewModel extends AndroidViewModel implements
         // 4) Any observers in RecipeListActivity will be automatically updated
 
         mRecipes.setValue(recipes);
+    }
+
+    public void displaySearchCategories(){
+        List<Recipe> categories = new ArrayList<>();
+        for(int i = 0; i < Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
+            Recipe recipe = new Recipe();
+            recipe.setTitle(Constants.DEFAULT_SEARCH_CATEGORIES[i]);
+            recipe.setImage_url(Constants.DEFAULT_SEARCH_CATEGORY_IMAGES[i]);
+            recipe.setSocial_rank(-1);
+            categories.add(recipe);
+        }
+        mRecipes.setValue(categories);
     }
 
     private void displayLoadingScreen(){
