@@ -6,6 +6,7 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -55,6 +56,18 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         mRecyclerView.addItemDecoration(itemDecorator);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if(!mRecyclerView.canScrollVertically(1) && mRecipeListViewModel.getIsViewingRecipes()){
+                    // search for the next page
+                    mRecipeListViewModel.searchNextPage();
+                }
+            }
+        });
     }
 
     private void subscribeObservers(){

@@ -26,6 +26,8 @@ public class RecipeRepository implements RequestCancelListener{
     private static RecipeRepository instance;
     private RecipeApi mRecipeApi;
     private RecipeListCallback mRecipeListCallback;
+    private String mQuery;
+    private int mPageNumber;
 
     // Calls
     private Call<RecipeSearchResponse> mRecipeSearchCall = null;
@@ -40,6 +42,8 @@ public class RecipeRepository implements RequestCancelListener{
 
     private RecipeRepository(RecipeApi recipeApi) {
         mRecipeApi = recipeApi;
+        mQuery = "";
+        mPageNumber = 0;
     }
 
     public void setRecipeListCallback(RecipeListCallback callback){
@@ -47,15 +51,22 @@ public class RecipeRepository implements RequestCancelListener{
     }
 
     public void searchApi(String query, int pageNumber){
+        mQuery = query;
+        mPageNumber = pageNumber;
+
         mRecipeListCallback.onQueryStart();
         mRecipeSearchCall = mRecipeApi
                 .searchRecipe(
                         Constants.API_KEY,
-                        query,
-                        String.valueOf(pageNumber)
+                        mQuery,
+                        String.valueOf(mPageNumber)
                 );
 
         mRecipeSearchCall.enqueue(recipeListSearchCallback);
+    }
+
+    public void searchNextPage(){
+        searchApi(mQuery, mPageNumber + 1);
     }
 
     private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
@@ -63,11 +74,6 @@ public class RecipeRepository implements RequestCancelListener{
         public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
             if(response.code() == 200){
                 Log.d(TAG, "onResponse: " + response.body().toString());
-                List<Recipe> recipes = new ArrayList<>(response.body().getRecipes());
-                mRecipeListCallback.setRecipes(recipes);
-                for(Recipe recipe: recipes){
-                    Log.d(TAG, "onResponse: " + recipe.toString());
-                }
             }
             else {
                 try {
@@ -76,6 +82,21 @@ public class RecipeRepository implements RequestCancelListener{
                     e.printStackTrace();
                 }
             }
+
+            // Set results to mRecipes list
+            try{
+                if(mPageNumber == 0){
+                    mRecipeListCallback.setRecipes(response.body().getRecipes());
+                }
+                else{
+                    List<Recipe> newRecipes = new ArrayList<>(response.body().getRecipes());
+                    mRecipeListCallback.appendRecipes(newRecipes);
+                }
+
+            }catch (NullPointerException e){
+                Log.e(TAG, "onResponse: NullPointerException: " + e.getMessage() );
+            }
+
             mRecipeListCallback.onQueryDone();
         }
 

@@ -11,4 +11,6 @@ public interface RecipeListCallback {
     void onQueryStart();
 
     void onQueryDone();
+
+    void appendRecipes(List<Recipe> recipes);
 }

@@ -5,6 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
@@ -63,6 +64,13 @@ public class RecipeListViewModel extends AndroidViewModel implements
         mRecipes.setValue(recipes);
     }
 
+    @Override
+    public void appendRecipes(List<Recipe> recipes) {
+        List<Recipe> currentRecipes = mRecipes.getValue();
+        currentRecipes.addAll(recipes);
+        mRecipes.setValue(currentRecipes);
+    }
+
     public void displaySearchCategories(){
         mIsViewingRecipes = false;
         List<Recipe> categories = new ArrayList<>();
@@ -82,6 +90,12 @@ public class RecipeListViewModel extends AndroidViewModel implements
         List<Recipe> loadingList = new ArrayList<>();
         loadingList.add(recipe);
         mRecipes.setValue(loadingList);
+    }
+
+    public void searchNextPage(){
+        if(!mIsPerformingQuery && getIsViewingRecipes()){
+            mRecipeRepository.searchNextPage();
+        }
     }
 
     public void search(String query, int pageNumber){

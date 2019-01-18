@@ -99,6 +99,9 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if(mRecipes.get(position).getSocial_rank() == -1){
             return CATEGORY_TYPE;
         }
+        else if(position == mRecipes.size() - 1){
+            return LOADING_TYPE;
+        }
         else if(mRecipes.get(position).getTitle().equals("LOADING...")){
             return LOADING_TYPE;
         }
