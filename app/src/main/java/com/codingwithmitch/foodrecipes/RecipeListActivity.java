@@ -72,6 +72,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
                 Log.d(TAG, "onQueryTextSubmit: " + query);
 
                 // Search the database for a recipe
+				mRecipeListViewModel.setIsViewingRecipes(true);
                 mRecipeListViewModel.search(query, 0);
 
                 return false;
