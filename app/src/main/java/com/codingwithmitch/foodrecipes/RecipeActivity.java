@@ -3,6 +3,7 @@ package com.codingwithmitch.foodrecipes;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
+import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -10,6 +11,9 @@ import android.widget.TextView;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
 public class RecipeActivity extends BaseActivity{
+
+    private static final String TAG = "RecipeActivity";
+
 
     // UI components
     private AppCompatImageView mRecipeImage;
@@ -35,7 +39,7 @@ public class RecipeActivity extends BaseActivity{
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
 
-
+            Log.d(TAG, "getIncomingIntent: " + recipe.toString());
         }
     }
 }

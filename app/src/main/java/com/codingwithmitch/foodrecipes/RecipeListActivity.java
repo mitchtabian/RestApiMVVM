@@ -110,8 +110,9 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
 
     @Override
     public void onRecipeClick(int position) {
-        Log.d(TAG, "onRecipeClick: clicked a recipe at position: " + position);
-
+        Intent intent = new Intent(RecipeListActivity.this, RecipeActivity.class);
+        intent.putExtra("recipe", mRecipeListViewModel.getSelectedRecipe(position));
+        startActivity(intent);
     }
 
     @Override

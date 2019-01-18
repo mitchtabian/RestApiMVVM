@@ -103,6 +103,14 @@ public class RecipeListViewModel extends AndroidViewModel implements
         mRecipeRepository.searchApi(query, pageNumber);
     }
 
+
+    public Recipe getSelectedRecipe(int position){
+        if(mRecipes.getValue().size() > 0){
+            return mRecipes.getValue().get(position);
+        }
+        return null;
+    }
+
     @Override
     public void onQueryStart(){
         mIsPerformingQuery = true;
