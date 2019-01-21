@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
 import android.view.View;
+
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -54,7 +55,6 @@ public class RecipeActivity extends BaseActivity{
             if(recipe != null){
                 mRecipeViewModel.search(recipe.getRecipe_id());
             }
-
         }
     }
 

@@ -47,7 +47,9 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         initRecyclerView();
         subscribeObservers();
         initSearchView();
-        mRecipeListViewModel.displaySearchCategories();
+        if(!mRecipeListViewModel.getIsViewingRecipes()){
+            mRecipeListViewModel.displaySearchCategories();
+        }
         setSupportActionBar((Toolbar)findViewById(R.id.toolbar));
     }
 
