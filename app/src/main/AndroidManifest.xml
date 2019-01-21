@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.codingwithmitch.restapimvvm">
+    package="com.codingwithmitch.foodrecipes">
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -21,7 +21,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".RecipeActivity" />
-        <activity android:name=".BaseActivity" />
     </application>
 
 </manifest>

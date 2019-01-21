@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="@dimen/recycler_loading_view_height">
 
-    <com.codingwithmitch.restapimvvm.util.HorizontalDottedProgress
+    <com.codingwithmitch.foodrecipes.util.HorizontalDottedProgress
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"

@@ -1,7 +1,7 @@
-package com.codingwithmitch.restapimvvm.requests;
+package com.codingwithmitch.foodrecipes.requests;
 
-import com.codingwithmitch.restapimvvm.requests.responses.RecipeResponse;
-import com.codingwithmitch.restapimvvm.requests.responses.RecipeSearchResponse;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

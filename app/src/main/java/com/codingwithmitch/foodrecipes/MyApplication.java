@@ -1,8 +1,8 @@
-package com.codingwithmitch.restapimvvm;
+package com.codingwithmitch.foodrecipes;
 
 import android.app.Application;
 
-import com.codingwithmitch.restapimvvm.util.Constants;
+import com.codingwithmitch.foodrecipes.util.Constants;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -15,10 +15,13 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        if(retrofit == null){
+            retrofit = new Retrofit.Builder()
+                    .baseUrl(Constants.BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+        }
+
     }
 
     public Retrofit getRetrofit() {

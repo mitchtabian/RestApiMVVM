@@ -1,4 +1,4 @@
-package com.codingwithmitch.restapimvvm.adapters;
+package com.codingwithmitch.foodrecipes.adapters;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.AppCompatImageView;
@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.codingwithmitch.restapimvvm.R;
-import com.codingwithmitch.restapimvvm.models.Recipe;
+import com.codingwithmitch.foodrecipes.R;
+import com.codingwithmitch.foodrecipes.models.Recipe;
 
 import java.util.List;
 
@@ -20,15 +20,13 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final String TAG = "RecipeRecyclerAdapter";
-
     private static final int RECIPE_TYPE = 1;
     private static final int LOADING_TYPE = 2;
     private static final int CATEGORY_TYPE = 3;
+    private static final int EXHAUSTED_TYPE = 4;
 
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
-
 
     public RecipeRecyclerAdapter(OnRecipeListener onRecipeListener) {
         mOnRecipeListener = onRecipeListener;
@@ -36,52 +34,57 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
 
         View view = null;
 
-        switch (viewType) {
+        switch (i) { // i is the view type constant
             case RECIPE_TYPE:{
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_recipe_list_item, parent, false);
-                return new ViewHolder(view, mOnRecipeListener);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
+                return new RecipeViewholder(view, mOnRecipeListener);
             }
 
             case LOADING_TYPE:{
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_loading_list_item, parent, false);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_loading_list_item, viewGroup, false);
                 return new LoadingViewHolder(view);
             }
 
             case CATEGORY_TYPE:{
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_category_list_item, parent, false);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
                 return new CategoryViewHolder(view, mOnRecipeListener);
             }
 
+            case EXHAUSTED_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_search_exhausted, viewGroup, false);
+                return new SearchExhaustedViewHolder(view);
+            }
+
             default:{
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_category_list_item, parent, false);
-                return new ViewHolder(view, mOnRecipeListener);
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
+                return new RecipeViewholder(view, mOnRecipeListener);
             }
         }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
 
-        int itemViewType = getItemViewType(position);
-        if(itemViewType == RECIPE_TYPE){
+        int itemViewType = getItemViewType(i);
+        if(itemViewType == RECIPE_TYPE) {
+            // set the image
             RequestOptions options = new RequestOptions()
                     .centerCrop()
                     .error(R.drawable.ic_launcher_background);
 
-            Glide.with(((ViewHolder)viewHolder).itemView)
+            Glide.with(((RecipeViewholder) viewHolder).itemView)
                     .setDefaultRequestOptions(options)
-                    .load(mRecipes.get(position).getImage_url())
-                    .into(((ViewHolder)viewHolder).image);
-
-            ((ViewHolder)viewHolder).title.setText(mRecipes.get(position).getTitle());
-            ((ViewHolder)viewHolder).publisher.setText(mRecipes.get(position).getPublisher());
-            ((ViewHolder)viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(position).getSocial_rank())));
+                    .load(mRecipes.get(i).getImage_url())
+                    .into(((RecipeViewholder) viewHolder).image);
 
 
+            ((RecipeViewholder) viewHolder).title.setText(mRecipes.get(i).getTitle());
+            ((RecipeViewholder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
+            ((RecipeViewholder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
         }
         else if(itemViewType == CATEGORY_TYPE){
             RequestOptions options = new RequestOptions()
@@ -90,33 +93,31 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             Glide.with(((CategoryViewHolder)viewHolder).itemView)
                     .setDefaultRequestOptions(options)
-                    .load(mRecipes.get(position).getImage_url())
+                    .load(mRecipes.get(i).getImage_url())
                     .into(((CategoryViewHolder)viewHolder).categoryImage);
 
-            ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(position).getTitle());
+            ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
         }
     }
-
 
     @Override
     public int getItemViewType(int position) {
         if(mRecipes.get(position).getSocial_rank() == -1){
             return CATEGORY_TYPE;
         }
-        else if(position == mRecipes.size() - 1){
+        else if(position == mRecipes.size() - 1
+                && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
             return LOADING_TYPE;
         }
         else if(mRecipes.get(position).getTitle().equals("LOADING...")){
             return LOADING_TYPE;
         }
+        else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
+            return EXHAUSTED_TYPE;
+        }
         else{
             return RECIPE_TYPE;
         }
-    }
-
-    public void setRecipes(List<Recipe> recipes){
-        mRecipes = recipes;
-        notifyDataSetChanged();
     }
 
     @Override
@@ -127,10 +128,14 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return 0;
     }
 
+    public void setRecipes(List<Recipe> recipes){
+        mRecipes = recipes;
+        notifyDataSetChanged();
+    }
 
-    public class LoadingViewHolder extends RecyclerView.ViewHolder {
+    public class SearchExhaustedViewHolder extends RecyclerView.ViewHolder {
 
-        public LoadingViewHolder(@NonNull View itemView) {
+        public SearchExhaustedViewHolder(@NonNull View itemView) {
             super(itemView);
         }
     }
@@ -139,7 +144,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      * ViewHolder for search categories
      */
     public class CategoryViewHolder extends RecyclerView.ViewHolder implements
-        View.OnClickListener
+            View.OnClickListener
     {
         CircleImageView categoryImage;
         TextView categoryTitle;
@@ -160,10 +165,17 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
+    public class LoadingViewHolder extends RecyclerView.ViewHolder {
+
+        public LoadingViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+    }
+
     /**
      * ViewHolder for Recipe List items
      */
-    public class ViewHolder extends RecyclerView.ViewHolder implements
+    public class RecipeViewholder extends RecyclerView.ViewHolder implements
             View.OnClickListener
     {
         TextView title, publisher, socialScore;
@@ -171,7 +183,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         OnRecipeListener listener;
 
 
-        public ViewHolder(View itemView, OnRecipeListener listener) {
+        public RecipeViewholder(View itemView, OnRecipeListener listener) {
             super(itemView);
             this.listener = listener;
             title = itemView.findViewById(R.id.recipe_title);
@@ -184,7 +196,6 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         @Override
         public void onClick(View v) {
-            Log.d(TAG, "onClick: called.");
             listener.onRecipeClick(getAdapterPosition());
         }
     }
@@ -195,3 +206,19 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

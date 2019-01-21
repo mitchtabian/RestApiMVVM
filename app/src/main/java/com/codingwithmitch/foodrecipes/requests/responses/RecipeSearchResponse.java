@@ -1,6 +1,6 @@
-package com.codingwithmitch.restapimvvm.requests.responses;
+package com.codingwithmitch.foodrecipes.requests.responses;
 
-import com.codingwithmitch.restapimvvm.models.Recipe;
+import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -20,16 +20,8 @@ public class RecipeSearchResponse {
         return count;
     }
 
-    public void setCount(int count) {
-        this.count = count;
-    }
-
     public List<Recipe> getRecipes() {
         return recipes;
-    }
-
-    public void setRecipes(List<Recipe> recipes) {
-        this.recipes = recipes;
     }
 
     @Override

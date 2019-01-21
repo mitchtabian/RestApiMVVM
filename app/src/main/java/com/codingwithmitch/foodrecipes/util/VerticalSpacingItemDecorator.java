@@ -1,4 +1,4 @@
-package com.codingwithmitch.restapimvvm.util;
+package com.codingwithmitch.foodrecipes.util;
 
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;

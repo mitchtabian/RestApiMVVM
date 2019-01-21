@@ -1,9 +1,10 @@
-package com.codingwithmitch.restapimvvm.models;
+package com.codingwithmitch.foodrecipes.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class Recipe implements Parcelable{
 
