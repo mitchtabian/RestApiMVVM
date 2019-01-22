@@ -2,6 +2,7 @@ package com.codingwithmitch.foodrecipes;
 
 import android.app.Application;
 
+import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 import com.codingwithmitch.foodrecipes.util.Constants;
 
 import retrofit2.Retrofit;

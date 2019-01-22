@@ -3,92 +3,79 @@ package com.codingwithmitch.foodrecipes.viewmodels;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.repositories.RecipeListCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-
-public class RecipeListViewModel extends AndroidViewModel implements
-        RecipeListCallback
+public class RecipeListViewModel extends AndroidViewModel
 {
 
+    private static final String TAG = "RecipeListViewModel";
+
     private RecipeRepository mRecipeRepository;
-    private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
     private boolean mIsPerformingQuery;
     private boolean mIsViewingRecipes;
-    private boolean mIsQueryExhausted;
+
+    private MediatorLiveData<Boolean> mIsQueryExhausted;
+    private final MediatorLiveData<List<Recipe>> mRecipes;
 
     public RecipeListViewModel(@NonNull Application application) {
         super(application);
         mRecipeRepository = RecipeRepository.getInstance(application);
-        mRecipeRepository.setRecipeListCallback(this);
+
+        // Prepare the Query Exhausted boolean
+        LiveData<Boolean> isQueryExhausted = mRecipeRepository.isQueryExhausted();
+        mIsQueryExhausted = new MediatorLiveData<>();
+
+        // assume the query is not exhausted to start with
+        mIsQueryExhausted.setValue(false);
+
+        mIsQueryExhausted.addSource(isQueryExhausted, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                mIsQueryExhausted.setValue(aBoolean);
+            }
+        });
+
+
+        // Prepare the Recipe List Data Observer
+        LiveData<List<Recipe>> observableRecipes = mRecipeRepository.getRecipes();
+        mRecipes = new MediatorLiveData<>();
+
+        // set by default null, until we get data from the web service.
+        mRecipes.setValue(null);
+
+        // observe the changes of the Recipes list from the web server and forward them to UI
+        mRecipes.addSource(observableRecipes, new Observer<List<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable List<Recipe> recipes) {
+                mIsPerformingQuery = false;
+                mRecipes.setValue(recipes);
+            }
+        });
     }
+
 
     public LiveData<List<Recipe>> getRecipes() {
         return mRecipes;
     }
 
-    public boolean getIsViewingRecipes() {
-        return mIsViewingRecipes;
-    }
-
-    public void setIsViewingRecipes(boolean isViewingRecipes) {
-        this.mIsViewingRecipes = isViewingRecipes;
-    }
-
-    public boolean getIsPerformingQuery(){
-        return mIsPerformingQuery;
-    }
-
-    public void cancelQuery(){
-        mRecipeRepository.onCancel();
-    }
-
-    public boolean getIsQueryExhausted(){
+    public LiveData<Boolean> isQueryExhausted(){
         return mIsQueryExhausted;
     }
 
-    @Override
-    public void setRecipes(List<Recipe> recipes) {
-
-        // 1) make http request using Retrofit to retrieve the data
-        // 2) use a callback method to send the list of recipes back
-        // 3) call mRecipes.setValue(recipes);
-        // 4) Any observers in RecipeListActivity will be automatically updated
-
-        mRecipes.setValue(recipes);
-    }
-
-    @Override
-    public void appendRecipes(List<Recipe> recipes) {
-        List<Recipe> currentRecipes = mRecipes.getValue();
-        currentRecipes.addAll(recipes);
-        mRecipes.setValue(currentRecipes);
-    }
-
-    @Override
-    public void onQueryExhausted() {
-        setQueryExhausted();
-    }
-
-    private void setQueryExhausted(){
-        mIsQueryExhausted = true;
-        List<Recipe> currentRecipes = mRecipes.getValue();
-        Recipe exhaustedMarkerRecipe = new Recipe();
-        exhaustedMarkerRecipe.setTitle("EXHAUSTED...");
-        currentRecipes.add(exhaustedMarkerRecipe);
-        mRecipes.setValue(currentRecipes);
+    public boolean isViewingRecipes() {
+        return mIsViewingRecipes;
     }
 
     public void displaySearchCategories(){
@@ -113,16 +100,19 @@ public class RecipeListViewModel extends AndroidViewModel implements
     }
 
     public void searchNextPage(){
-        if(!mIsPerformingQuery && getIsViewingRecipes()){
+        if(!mIsPerformingQuery
+                && !mIsQueryExhausted.getValue()
+                && mIsViewingRecipes){
             mRecipeRepository.searchNextPage();
         }
     }
 
     public void search(String query, int pageNumber){
         displayLoadingScreen();
+        mIsPerformingQuery = true;
+        mIsViewingRecipes = true;
         mRecipeRepository.searchApi(query, pageNumber);
     }
-
 
     public Recipe getSelectedRecipe(int position){
         if(mRecipes.getValue().size() > 0){
@@ -131,14 +121,19 @@ public class RecipeListViewModel extends AndroidViewModel implements
         return null;
     }
 
-    @Override
-    public void onQueryStart(){
-        mIsPerformingQuery = true;
-    }
-
-    @Override
-    public void onQueryDone(){
-        mIsPerformingQuery = false;
+    public boolean onBackPressed(){
+        if(mIsPerformingQuery){
+            mRecipeRepository.cancelQuery();
+            displaySearchCategories();
+        }
+        else{
+            if(mIsViewingRecipes){
+                displaySearchCategories();
+            }else{
+                return true; // press back btn
+            }
+        }
+        return false;
     }
 }
 

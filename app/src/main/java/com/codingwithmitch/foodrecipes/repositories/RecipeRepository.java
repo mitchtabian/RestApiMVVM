@@ -1,6 +1,8 @@
 package com.codingwithmitch.foodrecipes.repositories;
 
 import android.app.Application;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.MyApplication;
@@ -11,24 +13,29 @@ import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
-public class RecipeRepository implements RequestCancelListener{
+
+public class RecipeRepository {
 
     private static final String TAG = "RecipeRepository";
 
     private static RecipeRepository instance;
     private RecipeApi mRecipeApi;
-    private RecipeListCallback mRecipeListCallback;
-    private RecipeCallback mRecipeCallback;
     private String mQuery;
     private int mPageNumber;
+
+    private MutableLiveData<List<Recipe>> mObservableRecipes = new MutableLiveData<>();
+    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
+
+
+    private MutableLiveData<Recipe> mRecipe = new MutableLiveData<>();
+    private MutableLiveData<String> mRecipeQueryError = new MutableLiveData<>();
 
     // Calls
     private Call<RecipeSearchResponse> mRecipeSearchCall = null;
@@ -47,19 +54,27 @@ public class RecipeRepository implements RequestCancelListener{
         mPageNumber = 0;
     }
 
-    public void setRecipeCallback(RecipeCallback callback){
-        this.mRecipeCallback = callback;
+    public LiveData<List<Recipe>> getRecipes(){
+        return mObservableRecipes;
     }
 
-    public void setRecipeListCallback(RecipeListCallback callback){
-        mRecipeListCallback = callback;
+    public LiveData<Boolean> isQueryExhausted() {
+        return mIsQueryExhausted;
+    }
+
+    public LiveData<Recipe> getRecipe(){
+        return mRecipe;
+    }
+
+    public LiveData<String> getRecipeQueryError(){
+        return mRecipeQueryError;
     }
 
     public void searchApi(String query, int pageNumber){
         mQuery = query;
         mPageNumber = pageNumber;
+        mIsQueryExhausted.setValue(false);
 
-        mRecipeListCallback.onQueryStart();
         mRecipeSearchCall = mRecipeApi
                 .searchRecipe(
                         Constants.API_KEY,
@@ -85,6 +100,47 @@ public class RecipeRepository implements RequestCancelListener{
         responseCall.enqueue(singleRecipeCallback);
     }
 
+    private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
+        @Override
+        public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
+            if(response.code() == 200){
+                Log.d(TAG, "onResponse: " + response.body().toString());
+            }
+            else {
+                try {
+                    Log.d(TAG, "onResponse: " + response.errorBody().string());
+                    mIsQueryExhausted.setValue(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Set results to mRecipes list
+            try{
+                if(mPageNumber == 0){
+                    mObservableRecipes.setValue(response.body().getRecipes());
+                }
+                else{
+                    List<Recipe> currentRecipes = mObservableRecipes.getValue();
+                    currentRecipes.addAll(response.body().getRecipes());
+                    mObservableRecipes.setValue(currentRecipes);
+                }
+                if(response.body().getRecipes().size() < 30){
+                    mIsQueryExhausted.setValue(true);
+                }
+
+            }catch (NullPointerException e){
+                Log.e(TAG, "onResponse: NullPointerException: " + e.getMessage() );
+            }
+        }
+
+        @Override
+        public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
+            Log.d(TAG, "onResponse: ERROR: " + t.getMessage());
+            mIsQueryExhausted.setValue(true);
+        }
+    };
+
     /**
      * Callback for retrieving a single recipe given a recipe id.
      */
@@ -97,69 +153,25 @@ public class RecipeRepository implements RequestCancelListener{
             else {
                 try {
                     Log.d(TAG, "onResponse: " + response.errorBody().string());
-                    mRecipeCallback.onError(null);
+                    mRecipeQueryError.setValue("Couldn't retrieve the recipe. Check API key.");
                     return;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            mRecipeCallback.setRecipe(response.body().getRecipe());
+            mRecipe.setValue(response.body().getRecipe());
         }
 
         @Override
         public void onFailure(Call<RecipeResponse> call, Throwable t) {
-            mRecipeCallback.onError(t);
+            mRecipeQueryError.setValue(t.getMessage());
         }
     };
 
 
-    private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
-        @Override
-        public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                    mRecipeListCallback.onQueryExhausted();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Set results to mRecipes list
-            try{
-                if(mPageNumber == 0){
-                    mRecipeListCallback.setRecipes(response.body().getRecipes());
-                }
-                else{
-                    List<Recipe> newRecipes = new ArrayList<>(response.body().getRecipes());
-                    mRecipeListCallback.appendRecipes(newRecipes);
-                }
-                if(response.body().getRecipes().size() < 30){
-                    mRecipeListCallback.onQueryExhausted();
-                }
-
-            }catch (NullPointerException e){
-                Log.e(TAG, "onResponse: NullPointerException: " + e.getMessage() );
-            }
-
-            mRecipeListCallback.onQueryDone();
-        }
-
-        @Override
-        public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
-            Log.d(TAG, "onResponse: ERROR: " + t.getMessage());
-            mRecipeListCallback.onQueryDone();
-        }
-    };
-
-    @Override
-    public void onCancel() {
+    public void cancelQuery() {
         if(mRecipeSearchCall != null){
             mRecipeSearchCall.cancel();
-            mRecipeListCallback.onQueryDone();
             mRecipeSearchCall = null;
         }
     }

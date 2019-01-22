@@ -128,6 +128,12 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return 0;
     }
 
+    public void setQueryExhausted(){
+        Recipe exhaustedMarkerRecipe = new Recipe();
+        exhaustedMarkerRecipe.setTitle("EXHAUSTED...");
+        mRecipes.add(exhaustedMarkerRecipe);
+    }
+
     public void setRecipes(List<Recipe> recipes){
         mRecipes = recipes;
         notifyDataSetChanged();

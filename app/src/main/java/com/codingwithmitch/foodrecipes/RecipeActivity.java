@@ -67,20 +67,21 @@ public class RecipeActivity extends BaseActivity{
             }
         });
 
-        mRecipeViewModel.getQueryError().observe(this, new Observer<Throwable>() {
+
+        mRecipeViewModel.getQueryError().observe(this, new Observer<String>() {
             @Override
-            public void onChanged(@Nullable Throwable throwable) {
+            public void onChanged(@Nullable String s) {
                 showProgressBar(false);
-                displayErrorScreen(throwable);
+                displayErrorScreen(s);
             }
         });
     }
 
-    private void displayErrorScreen(Throwable t){
+    private void displayErrorScreen(String errorMessage){
         mRecipeTitle.setText("Error retrieving recipe...");
         TextView textView = new TextView(this);
-        if(t != null){
-            textView.setText(t.getMessage());
+        if(!errorMessage.equals("")){
+            textView.setText(errorMessage);
         }
         else{
             textView.setText("Error");
