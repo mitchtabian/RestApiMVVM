@@ -14,46 +14,17 @@ import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 public class RecipeViewModel extends AndroidViewModel {
 
-    private MediatorLiveData<String> mErrorMessage;
-    private MediatorLiveData<Recipe> mRecipe;
     private RecipeRepository mRecipeRepository;
 
     public RecipeViewModel(@NonNull Application application) {
         super(application);
         mRecipeRepository = RecipeRepository.getInstance(application);
-
-        mRecipe = new MediatorLiveData<>();
-        mRecipe.setValue(null);
-        LiveData<Recipe> recipe = mRecipeRepository.getRecipe();
-        mRecipe.addSource(recipe, new Observer<Recipe>() {
-            @Override
-            public void onChanged(@Nullable Recipe recipe) {
-                mRecipe.setValue(recipe);
-            }
-        });
-
-        mErrorMessage = new MediatorLiveData<>();
-        mErrorMessage.setValue(null);
-        LiveData<String> errorMessage = mRecipeRepository.getRecipeQueryError();
-        mErrorMessage.addSource(errorMessage, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String errorMessage) {
-                mErrorMessage.setValue(errorMessage);
-            }
-        });
     }
 
-    public LiveData<Recipe> getRecipe(){
-        return mRecipe;
+    public LiveData<Recipe> getRecipe(String recipeId){
+        return mRecipeRepository.getRecipe(recipeId);
     }
 
-    public LiveData<String> getQueryError(){
-        return mErrorMessage;
-    }
-
-    public void search(String recipeId) {
-        mRecipeRepository.searchForRecipe(recipeId);
-    }
 }
 
 

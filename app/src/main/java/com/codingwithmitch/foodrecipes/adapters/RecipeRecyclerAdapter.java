@@ -1,5 +1,6 @@
 package com.codingwithmitch.foodrecipes.adapters;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
@@ -13,12 +14,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.R;
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.util.Constants;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final String TAG = "RecipeRecyclerAdapter";
 
     private static final int RECIPE_TYPE = 1;
     private static final int LOADING_TYPE = 2;
@@ -30,6 +35,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     public RecipeRecyclerAdapter(OnRecipeListener onRecipeListener) {
         mOnRecipeListener = onRecipeListener;
+        mRecipes = new ArrayList<>();
     }
 
     @NonNull
@@ -91,9 +97,10 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     .centerCrop()
                     .error(R.drawable.ic_launcher_background);
 
+            Uri path = Uri.parse("android.resource://com.codingwithmitch.foodrecipes/drawable/" + mRecipes.get(i).getImage_url());
             Glide.with(((CategoryViewHolder)viewHolder).itemView)
                     .setDefaultRequestOptions(options)
-                    .load(mRecipes.get(i).getImage_url())
+                    .load(path)
                     .into(((CategoryViewHolder)viewHolder).categoryImage);
 
             ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
@@ -106,6 +113,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             return CATEGORY_TYPE;
         }
         else if(position == mRecipes.size() - 1
+                && position != 0
                 && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
             return LOADING_TYPE;
         }
@@ -132,11 +140,59 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         Recipe exhaustedMarkerRecipe = new Recipe();
         exhaustedMarkerRecipe.setTitle("EXHAUSTED...");
         mRecipes.add(exhaustedMarkerRecipe);
+        notifyDataSetChanged();
+    }
+
+    public void displayLoading(){
+        if(!isLoading()){
+            Recipe recipe = new Recipe();
+            recipe.setTitle("LOADING...");
+            List<Recipe> loadingList = new ArrayList<>();
+            loadingList.add(recipe);
+            mRecipes = loadingList;
+            notifyDataSetChanged();
+        }
+    }
+
+    public void hideLoading(){
+        if(isLoading()){
+            mRecipes.remove(mRecipes.size() - 1);
+            notifyDataSetChanged();
+        }
+    }
+
+    private boolean isLoading(){
+        if(mRecipes.size() > 0){
+            if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void displaySearchCategories(){
+        List<Recipe> categories = new ArrayList<>();
+        for(int i = 0; i < Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
+            Recipe recipe = new Recipe();
+            recipe.setTitle(Constants.DEFAULT_SEARCH_CATEGORIES[i]);
+            recipe.setImage_url(Constants.DEFAULT_SEARCH_CATEGORY_IMAGES[i]);
+            recipe.setSocial_rank(-1);
+            categories.add(recipe);
+        }
+        mRecipes = categories;
+        notifyDataSetChanged();
     }
 
     public void setRecipes(List<Recipe> recipes){
         mRecipes = recipes;
         notifyDataSetChanged();
+    }
+
+    public Recipe getSelectedRecipe(int position){
+        if(mRecipes.size() > 0){
+            return mRecipes.get(position);
+        }
+        return null;
     }
 
     public class SearchExhaustedViewHolder extends RecyclerView.ViewHolder {

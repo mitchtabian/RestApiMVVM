@@ -43,36 +43,30 @@ public class RecipeActivity extends BaseActivity{
 
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
-        getIncomingIntent();
-        subscribeObservers();
         showProgressBar(true);
+        getIncomingIntent();
     }
 
     private void getIncomingIntent(){
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
-
-            if(recipe != null){
-                mRecipeViewModel.search(recipe.getRecipe_id());
-            }
+            subscribeObservers(recipe.getRecipe_id());
         }
     }
 
 
-    private void subscribeObservers(){
-        mRecipeViewModel.getRecipe().observe(this, new Observer<Recipe>() {
+    private void subscribeObservers(String recipeId){
+        mRecipeViewModel.getRecipe(recipeId).observe(this, new Observer<Recipe>() {
             @Override
             public void onChanged(@Nullable Recipe recipe) {
-                setRecipeProperties(recipe);
-            }
-        });
-
-
-        mRecipeViewModel.getQueryError().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                showProgressBar(false);
-                displayErrorScreen(s);
+                if(recipe != null){
+                    Log.d(TAG, "onChanged: " + recipe.getTitle());
+                    setRecipeProperties(recipe);
+                }
+                else{
+                    showProgressBar(false);
+                    displayErrorScreen("Error retrieving data. Check network connection.");
+                }
             }
         });
     }
