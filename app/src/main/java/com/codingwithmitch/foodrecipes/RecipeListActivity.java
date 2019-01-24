@@ -48,7 +48,7 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         subscribeObservers();
         initSearchView();
         if(!mRecipeListViewModel.isViewingRecipes()){
-            mAdapter.displaySearchCategories();
+            displaySearchCategories();
         }
         setSupportActionBar((Toolbar)findViewById(R.id.toolbar));
     }
@@ -78,11 +78,13 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                Log.d(TAG, "onChanged: recipes: " + recipes.size());
-                mAdapter.setRecipes(recipes);
+                if(mRecipeListViewModel.isViewingRecipes()){
+                    Log.d(TAG, "onChanged: recipes: " + recipes.size());
+                    mAdapter.setRecipes(recipes);
 
-                if(recipes.size() <= 30){
-                    mRecyclerView.scrollToPosition(0);
+                    if(recipes.size() <= 30){
+                        mRecyclerView.scrollToPosition(0);
+                    }
                 }
             }
         });
@@ -147,15 +149,21 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
             super.onBackPressed();
         }
         else{
-            mAdapter.displaySearchCategories();
+            displaySearchCategories();
         }
+    }
+
+    private void displaySearchCategories(){
+        Log.d(TAG, "displaySearchCategories: called.");
+        mRecipeListViewModel.setIsViewingRecipes(false);
+        mAdapter.displaySearchCategories();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if(item.getItemId() == R.id.action_categories){
-//            mRecipeListViewModel.displaySearchCategories();
+            displaySearchCategories();
         }
 
         return super.onOptionsItemSelected(item);

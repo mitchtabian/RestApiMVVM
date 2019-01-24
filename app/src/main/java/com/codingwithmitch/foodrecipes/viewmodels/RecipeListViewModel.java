@@ -98,7 +98,6 @@ public class RecipeListViewModel extends AndroidViewModel
         }
     }
 
-
     public boolean onBackPressed(){
         if(mIsPerformingQuery.getValue()){
             mRecipeRepository.cancelRequest();
@@ -108,6 +107,10 @@ public class RecipeListViewModel extends AndroidViewModel
             return false;
         }
         return true;
+    }
+
+    public void setIsViewingRecipes(boolean isViewingRecipes){
+        mIsViewingRecipes = isViewingRecipes;
     }
 }
 
