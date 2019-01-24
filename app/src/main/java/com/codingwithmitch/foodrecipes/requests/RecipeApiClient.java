@@ -2,9 +2,7 @@ package com.codingwithmitch.foodrecipes.requests;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
+
 import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.AppExecutors;
@@ -17,7 +15,6 @@ import com.codingwithmitch.foodrecipes.util.Constants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 

@@ -7,6 +7,7 @@ import android.util.Log;
 import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecipeCacheClient {
@@ -31,7 +32,11 @@ public class RecipeCacheClient {
         AppExecutors.get().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                List<Recipe> list = recipeDao.searchRecipes(query, pageNumber);
+                List<Recipe> list = new ArrayList<>();
+                for(String word: query.split(" ")){
+                    Log.d(TAG, "run: word: " + word);
+                    list.addAll(recipeDao.searchRecipes(word, pageNumber));
+                }
                 mRecipes.postValue(list);
             }
         });
