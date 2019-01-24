@@ -8,21 +8,15 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.persistence.RecipeCacheClient;
 import com.codingwithmitch.foodrecipes.persistence.RecipeDao;
 import com.codingwithmitch.foodrecipes.persistence.RecipeDatabase;
 import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 
-import java.io.IOException;
-
-import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Response;
+
 
 
 
@@ -87,8 +81,8 @@ public class RecipeRepository {
             }
         });
 
-    }
 
+    }
 
     public LiveData<List<Recipe>> getRecipes(){
         return mRecipes;
@@ -123,15 +117,19 @@ public class RecipeRepository {
     }
 
     private void doneQuery(List<Recipe> list){
-        misPerformingQuery.postValue(false);
-        if(list.size() < 30){
-            mIsQueryExhausted.postValue(true);
+        misPerformingQuery.setValue(false);
+        if(list.size() < 30 ){
+            mIsQueryExhausted.setValue(true);
         }
     }
 
     public LiveData<Recipe> getRecipe(final String recipeId){
         mRecipeApiClient.refreshRecipe(recipeId, mRecipeDao);
         return mRecipeDao.getRecipe(recipeId);
+    }
+
+    public LiveData<Boolean> hasNetworkTimedOut(){
+        return mRecipeApiClient.hasNetworkTimedOut();
     }
 
     public void cancelRequest() {

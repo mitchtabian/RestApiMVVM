@@ -1,10 +1,8 @@
 package com.codingwithmitch.foodrecipes;
 
 
-import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,8 +14,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
 
 
 import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
@@ -78,14 +74,17 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                if(mRecipeListViewModel.isViewingRecipes()){
-                    Log.d(TAG, "onChanged: recipes: " + recipes.size());
-                    mAdapter.setRecipes(recipes);
+                if(recipes != null){
+                    if(mRecipeListViewModel.isViewingRecipes()){
+                        Log.d(TAG, "onChanged: recipes: " + recipes.size());
+                        mAdapter.setRecipes(recipes);
 
-                    if(recipes.size() <= 30){
-                        mRecyclerView.scrollToPosition(0);
+                        if(recipes.size() <= 30){
+                            mRecyclerView.scrollToPosition(0);
+                        }
                     }
                 }
+
             }
         });
 

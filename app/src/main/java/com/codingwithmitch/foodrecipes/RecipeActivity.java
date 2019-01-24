@@ -3,6 +3,7 @@ package com.codingwithmitch.foodrecipes;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
@@ -16,6 +17,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
+
+import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
 public class RecipeActivity extends BaseActivity{
 
@@ -60,19 +63,31 @@ public class RecipeActivity extends BaseActivity{
             @Override
             public void onChanged(@Nullable Recipe recipe) {
                 if(recipe != null){
+                    Log.d(TAG, "onChanged: ---------------------------------------------------------------------------");
                     Log.d(TAG, "onChanged: " + recipe.getTitle());
+                    for(String ingredient: recipe.getIngredients()){
+                        Log.d(TAG, "onChanged: " + ingredient);
+                    }
                     setRecipeProperties(recipe);
+                    mRecipeViewModel.setRetrievedRecipe(true);
                 }
-                else{
-                    showProgressBar(false);
-                    displayErrorScreen("Error retrieving data. Check network connection.");
-                }
+            }
+        });
+
+        mRecipeViewModel.hasNetworkTimedOut().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+             if(aBoolean && !mRecipeViewModel.didRetrieveRecipe()){
+                 Log.e(TAG, "run: Couldn't retrieve data. Likely a network problem.");
+                 displayErrorScreen("Error retrieving data. Check network connection.");
+             }
             }
         });
     }
 
     private void displayErrorScreen(String errorMessage){
         mRecipeTitle.setText("Error retrieving recipe...");
+        mRecipeRank.setText("");
         TextView textView = new TextView(this);
         if(!errorMessage.equals("")){
             textView.setText(errorMessage);
@@ -92,6 +107,7 @@ public class RecipeActivity extends BaseActivity{
                 .load(R.drawable.ic_launcher_background)
                 .into(mRecipeImage);
         showParent();
+        showProgressBar(false);
     }
 
 
@@ -109,6 +125,7 @@ public class RecipeActivity extends BaseActivity{
             mRecipeTitle.setText(recipe.getTitle());
             mRecipeRank.setText(String.valueOf(Math.round(recipe.getSocial_rank())));
 
+            mRecipeIngredientsContainer.removeAllViews();
             for(String ingredient: recipe.getIngredients()){
                 TextView textView = new TextView(this);
                 textView.setText(ingredient);

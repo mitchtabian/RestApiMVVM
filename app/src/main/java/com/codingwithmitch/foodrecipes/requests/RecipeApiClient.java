@@ -2,6 +2,9 @@ package com.codingwithmitch.foodrecipes.requests;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.AppExecutors;
@@ -14,9 +17,14 @@ import com.codingwithmitch.foodrecipes.util.Constants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Response;
+
+import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
 public class RecipeApiClient {
 
@@ -26,6 +34,7 @@ public class RecipeApiClient {
     private RetrieveRecipesRunnable mRetrieveRecipesRunnable;
     private RefreshRecipeRunnable mRefreshRecipeRunnable;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
+    private MutableLiveData<Boolean> mHasNetworkTimedOut = new MutableLiveData<>();
 
     public static RecipeApiClient getInstance(){
         if(instance == null){
@@ -54,6 +63,10 @@ public class RecipeApiClient {
         return mRecipes;
     }
 
+    public LiveData<Boolean> hasNetworkTimedOut(){
+        return mHasNetworkTimedOut;
+    }
+
     public void searchRecipesApi(String query, int pageNumber){
         if(mRetrieveRecipesRunnable != null){
             mRetrieveRecipesRunnable = null;
@@ -63,11 +76,23 @@ public class RecipeApiClient {
     }
 
     public void refreshRecipe(final String recipeId, final RecipeDao dao){
+        mHasNetworkTimedOut.setValue(false);
         if(mRefreshRecipeRunnable != null){
             mRefreshRecipeRunnable = null;
         }
         mRefreshRecipeRunnable = new RefreshRecipeRunnable(recipeId, dao);
-        AppExecutors.get().networkIO().execute(mRefreshRecipeRunnable);
+//        AppExecutors.get().networkIO().execute(mRefreshRecipeRunnable);
+
+        final Future handler = AppExecutors.get().networkIO().submit(mRefreshRecipeRunnable);
+
+        // Set a timeout for the data refresh
+        AppExecutors.get().networkIO().schedule(new Runnable() {
+            @Override
+            public void run() {
+                mHasNetworkTimedOut.postValue(true);
+                handler.cancel(true);
+            }
+        }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
     private class RefreshRecipeRunnable implements Runnable{
@@ -87,6 +112,7 @@ public class RecipeApiClient {
             try {
                 Response response = getRecipe(recipeId).execute();
                 if(cancelRequest){
+                    Log.d(TAG, "run: canceling the request.");
                     return;
                 }
                 Log.d(TAG, "run: response code: " + response.code());
@@ -99,7 +125,7 @@ public class RecipeApiClient {
                     Log.e(TAG, "run: error: " + error );
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "run: IOException: " + e.getMessage());
             }
         }
 

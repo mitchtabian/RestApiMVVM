@@ -11,6 +11,8 @@ import java.util.List;
 
 public class RecipeCacheClient {
 
+    private static final String TAG = "RecipeCacheClient";
+
     private static RecipeCacheClient instance;
     private MutableLiveData<List<Recipe>> mRecipes = new MutableLiveData<>();
 
@@ -34,7 +36,6 @@ public class RecipeCacheClient {
             }
         });
     }
-
 
 }
 
