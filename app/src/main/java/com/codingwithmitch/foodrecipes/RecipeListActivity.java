@@ -3,6 +3,7 @@ package com.codingwithmitch.foodrecipes;
 import android.os.Bundle;
 import android.view.View;
 
+
 public class RecipeListActivity extends BaseActivity {
 
     @Override
@@ -22,4 +23,5 @@ public class RecipeListActivity extends BaseActivity {
             }
         });
     }
+
 }

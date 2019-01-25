@@ -18,6 +18,12 @@ public class ServiceGenerator {
                     .addConverterFactory(GsonConverterFactory.create());
 
     private static Retrofit retrofit = retrofitBuilder.build();
+
+    private static RecipeApi recipeApi = retrofit.create(RecipeApi.class);
+
+    public static RecipeApi getRecipeApi() {
+        return recipeApi;
+    }
 }
 
 
