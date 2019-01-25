@@ -22,15 +22,6 @@ public class RecipeListViewModel extends AndroidViewModel {
         return mRecipes;
     }
 
-    public void setRecipes(List<Recipe> recipes) {
-
-        // 1) make http request using Retrofit to retrieve the data
-        // 2) use a callback method to send the list of recipes back
-        // 3) call mRecipes.setValue(recipes);
-        // 4) Any observers in RecipeListActivity will be automatically updated
-
-        mRecipes.setValue(recipes);
-    }
 }
 
 
