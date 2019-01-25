@@ -6,13 +6,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.R;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecipeViewHolder> {
+public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
@@ -30,11 +32,20 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecipeViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecipeViewHolder recipeViewHolder, int i) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+        // set the image
+        RequestOptions options = new RequestOptions()
+                .centerCrop()
+                .error(R.drawable.ic_launcher_background);
 
-        ((RecipeViewHolder) recipeViewHolder).title.setText(mRecipes.get(i).getTitle());
-        ((RecipeViewHolder) recipeViewHolder).publisher.setText(mRecipes.get(i).getPublisher());
-        ((RecipeViewHolder) recipeViewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+        Glide.with(((RecipeViewHolder) viewHolder).itemView)
+                .setDefaultRequestOptions(options)
+                .load(mRecipes.get(i).getImage_url())
+                .into(((RecipeViewHolder) viewHolder).image);
+
+        ((RecipeViewHolder) viewHolder).title.setText(mRecipes.get(i).getTitle());
+        ((RecipeViewHolder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
+        ((RecipeViewHolder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
     }
 
     @Override
