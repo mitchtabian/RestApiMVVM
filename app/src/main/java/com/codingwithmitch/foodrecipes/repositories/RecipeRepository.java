@@ -1,10 +1,6 @@
 package com.codingwithmitch.foodrecipes.repositories;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.content.Context;
-
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
 
@@ -30,7 +26,12 @@ public class RecipeRepository {
         return mRecipeApiClient.getRecipes();
     }
 
-
+    public void searchRecipesApi(String query, int pageNumber){
+        if(pageNumber == 0){
+            pageNumber = 1;
+        }
+        mRecipeApiClient.searchRecipesApi(query, pageNumber);
+    }
 }
 
 
