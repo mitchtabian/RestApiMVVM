@@ -3,8 +3,6 @@ package com.codingwithmitch.foodrecipes;
 import android.os.Bundle;
 import android.view.View;
 
-import retrofit2.Retrofit;
-
 public class RecipeListActivity extends BaseActivity {
 
     @Override
@@ -23,7 +21,5 @@ public class RecipeListActivity extends BaseActivity {
                 }
             }
         });
-
-        Retrofit retrofit = ((MyApplication) getApplication()).getRetrofit();
     }
 }
