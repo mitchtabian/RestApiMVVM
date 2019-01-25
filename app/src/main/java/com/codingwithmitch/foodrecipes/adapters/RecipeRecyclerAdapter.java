@@ -1,19 +1,17 @@
 package com.codingwithmitch.foodrecipes.adapters;
 
 import android.support.annotation.NonNull;
-import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.R;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -26,18 +24,19 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     public RecipeRecyclerAdapter(OnRecipeListener onRecipeListener) {
         mOnRecipeListener = onRecipeListener;
+        mRecipes = new ArrayList<>();
     }
+
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-
         View view = null;
 
         switch (i) { // i is the view type constant
             case RECIPE_TYPE:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
-                return new RecipeViewholder(view, mOnRecipeListener);
+                return new RecipeViewHolder(view, mOnRecipeListener);
             }
 
             case LOADING_TYPE:{
@@ -45,10 +44,9 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 return new LoadingViewHolder(view);
             }
 
-
             default:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
-                return new RecipeViewholder(view, mOnRecipeListener);
+                return new RecipeViewHolder(view, mOnRecipeListener);
             }
         }
     }
@@ -63,15 +61,14 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     .centerCrop()
                     .error(R.drawable.ic_launcher_background);
 
-            Glide.with(((RecipeViewholder) viewHolder).itemView)
+            Glide.with(((RecipeViewHolder) viewHolder).itemView)
                     .setDefaultRequestOptions(options)
                     .load(mRecipes.get(i).getImage_url())
-                    .into(((RecipeViewholder) viewHolder).image);
+                    .into(((RecipeViewHolder) viewHolder).image);
 
-
-            ((RecipeViewholder) viewHolder).title.setText(mRecipes.get(i).getTitle());
-            ((RecipeViewholder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
-            ((RecipeViewholder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+            ((RecipeViewHolder) viewHolder).title.setText(mRecipes.get(i).getTitle());
+            ((RecipeViewHolder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
+            ((RecipeViewHolder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
         }
     }
 
@@ -87,57 +84,43 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Override
     public int getItemCount() {
-        if(mRecipes != null){
-            return mRecipes.size();
+        return mRecipes.size();
+    }
+
+    public void displayLoading(){
+        if(!isLoading()){
+            Recipe recipe = new Recipe();
+            recipe.setTitle("LOADING...");
+            List<Recipe> loadingList = new ArrayList<>();
+            loadingList.add(recipe);
+            mRecipes = loadingList;
+            notifyDataSetChanged();
         }
-        return 0;
+    }
+
+    private boolean isLoading(){
+        if(mRecipes.size() > 0){
+            if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setRecipes(List<Recipe> recipes){
         mRecipes = recipes;
         notifyDataSetChanged();
     }
-
-    public class LoadingViewHolder extends RecyclerView.ViewHolder {
-
-        public LoadingViewHolder(@NonNull View itemView) {
-            super(itemView);
-        }
-    }
-
-    /**
-     * ViewHolder for Recipe List items
-     */
-    public class RecipeViewholder extends RecyclerView.ViewHolder implements
-            View.OnClickListener
-    {
-        TextView title, publisher, socialScore;
-        AppCompatImageView image;
-        OnRecipeListener listener;
-
-
-        public RecipeViewholder(View itemView, OnRecipeListener listener) {
-            super(itemView);
-            this.listener = listener;
-            title = itemView.findViewById(R.id.recipe_title);
-            publisher = itemView.findViewById(R.id.recipe_publisher);
-            socialScore = itemView.findViewById(R.id.recipe_social_score);
-            image = itemView.findViewById(R.id.recipe_image);
-
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            listener.onRecipeClick(getAdapterPosition());
-        }
-    }
-
-    public interface OnRecipeListener{
-        void onRecipeClick(int position);
-    }
-
 }
+
+
+
+
+
+
+
+
+
 
 
 
