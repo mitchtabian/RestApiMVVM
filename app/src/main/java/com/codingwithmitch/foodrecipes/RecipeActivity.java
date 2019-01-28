@@ -9,14 +9,13 @@ import android.widget.TextView;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
-public class RecipeActivity extends BaseActivity{
+public class RecipeActivity extends BaseActivity {
 
     // UI components
     private AppCompatImageView mRecipeImage;
     private TextView mRecipeTitle, mRecipeRank;
     private LinearLayout mRecipeIngredientsContainer;
     private ScrollView mParent;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,10 +34,19 @@ public class RecipeActivity extends BaseActivity{
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
 
-
         }
     }
+
 }
+
+
+
+
+
+
+
+
+
 
 
 
