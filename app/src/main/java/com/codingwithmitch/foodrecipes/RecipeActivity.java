@@ -16,10 +16,9 @@ import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
 
-public class RecipeActivity extends BaseActivity{
+public class RecipeActivity extends BaseActivity {
 
     private static final String TAG = "RecipeActivity";
-
 
     // UI components
     private AppCompatImageView mRecipeImage;
@@ -28,7 +27,6 @@ public class RecipeActivity extends BaseActivity{
     private ScrollView mParent;
 
     private RecipeViewModel mRecipeViewModel;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -42,32 +40,33 @@ public class RecipeActivity extends BaseActivity{
 
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
-        getIncomingIntent();
-        subscribeObservers();
         showProgressBar(true);
+        subscribeObservers();
+        getIncomingIntent();
     }
 
     private void getIncomingIntent(){
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
-
-            if(recipe != null){
-                mRecipeViewModel.search(recipe.getRecipe_id());
-            }
-
+            mRecipeViewModel.searchRecipeById(recipe.getRecipe_id());
         }
     }
-
 
     private void subscribeObservers(){
         mRecipeViewModel.getRecipe().observe(this, new Observer<Recipe>() {
             @Override
             public void onChanged(@Nullable Recipe recipe) {
-                setRecipeProperties(recipe);
+                if(recipe != null){
+                    Log.d(TAG, "onChanged: ---------------------------------------------------------------------------");
+                    Log.d(TAG, "onChanged: " + recipe.getTitle());
+                    for(String ingredient: recipe.getIngredients()){
+                        Log.d(TAG, "onChanged: " + ingredient);
+                    }
+                    setRecipeProperties(recipe);
+                }
             }
         });
     }
-
 
     private void setRecipeProperties(Recipe recipe){
 
@@ -83,6 +82,7 @@ public class RecipeActivity extends BaseActivity{
             mRecipeTitle.setText(recipe.getTitle());
             mRecipeRank.setText(String.valueOf(Math.round(recipe.getSocial_rank())));
 
+            mRecipeIngredientsContainer.removeAllViews();
             for(String ingredient: recipe.getIngredients()){
                 TextView textView = new TextView(this);
                 textView.setText(ingredient);
@@ -98,10 +98,20 @@ public class RecipeActivity extends BaseActivity{
         showProgressBar(false);
     }
 
+
     private void showParent(){
         mParent.setVisibility(View.VISIBLE);
     }
 }
+
+
+
+
+
+
+
+
+
 
 
 
