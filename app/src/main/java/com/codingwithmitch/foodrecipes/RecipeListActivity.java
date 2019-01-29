@@ -1,10 +1,7 @@
 package com.codingwithmitch.foodrecipes;
 
-
-import android.app.SearchManager;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,18 +13,23 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
+import android.view.View;
 
 
+import com.codingwithmitch.foodrecipes.adapters.OnRecipeListener;
 import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
+
+import com.codingwithmitch.foodrecipes.util.Testing;
 import com.codingwithmitch.foodrecipes.util.VerticalSpacingItemDecorator;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeListViewModel;
+
 
 import java.util.List;
 
 
-public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAdapter.OnRecipeListener {
+
+public class RecipeListActivity extends BaseActivity implements OnRecipeListener {
 
     private static final String TAG = "RecipeListActivity";
 
@@ -47,9 +49,34 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         subscribeObservers();
         initSearchView();
         if(!mRecipeListViewModel.isViewingRecipes()){
-            mRecipeListViewModel.displaySearchCategories();
+            displaySearchCategories();
         }
         setSupportActionBar((Toolbar)findViewById(R.id.toolbar));
+    }
+
+    private void subscribeObservers(){
+
+        mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable List<Recipe> recipes) {
+                if(recipes != null){
+                    if(mRecipeListViewModel.isViewingRecipes()){
+                        mRecipeListViewModel.setIsPerformingQuery(false);
+                        Testing.printRecipes("network test", recipes);
+                        mAdapter.setRecipes(recipes);
+                    }
+                }
+
+            }
+        });
+
+        mRecipeListViewModel.isQueryExhausted().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                Log.d(TAG, "onChanged: query is exhausted: " + aBoolean);
+                if(aBoolean)mAdapter.setQueryExhausted();
+            }
+        });
     }
 
     private void initRecyclerView(){
@@ -72,32 +99,16 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         });
     }
 
-    private void subscribeObservers(){
-
-        mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
-            @Override
-            public void onChanged(@Nullable List<Recipe> recipes) {
-                mAdapter.setRecipes(recipes);
-            }
-        });
-
-        mRecipeListViewModel.isQueryExhausted().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(@Nullable Boolean aBoolean) {
-                if(aBoolean)mAdapter.setQueryExhausted();
-            }
-        });
-    }
-
     private void initSearchView(){
-        SearchView searchView = findViewById(R.id.search_view);
+        final SearchView searchView = findViewById(R.id.search_view);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
 
                 // Search the database for a recipe
-                mRecipeListViewModel.search(query, 0);
-                mRecyclerView.requestFocus();
+                mAdapter.displayLoading();
+                mRecipeListViewModel.searchRecipesApi(query, 1);
+                searchView.clearFocus();
 
                 return false;
             }
@@ -112,17 +123,23 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         });
     }
 
-
     @Override
     public void onRecipeClick(int position) {
         Intent intent = new Intent(RecipeListActivity.this, RecipeActivity.class);
-        intent.putExtra("recipe", mRecipeListViewModel.getSelectedRecipe(position));
+        intent.putExtra("recipe", mAdapter.getSelectedRecipe(position));
         startActivity(intent);
     }
 
     @Override
     public void onCategoryClick(String category) {
-        mRecipeListViewModel.search(category, 0);
+        mAdapter.displayLoading();
+        mRecipeListViewModel.searchRecipesApi(category, 1);
+    }
+
+    private void displaySearchCategories(){
+        Log.d(TAG, "displaySearchCategories: called.");
+        mRecipeListViewModel.setIsViewingRecipes(false);
+        mAdapter.displaySearchCategories();
     }
 
     @Override
@@ -130,13 +147,16 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         if(mRecipeListViewModel.onBackPressed()){
             super.onBackPressed();
         }
+        else{
+            displaySearchCategories();
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if(item.getItemId() == R.id.action_categories){
-            mRecipeListViewModel.displaySearchCategories();
+            displaySearchCategories();
         }
 
         return super.onOptionsItemSelected(item);
@@ -148,12 +168,6 @@ public class RecipeListActivity extends BaseActivity implements RecipeRecyclerAd
         return super.onCreateOptionsMenu(menu);
     }
 }
-
-
-
-
-
-
 
 
 

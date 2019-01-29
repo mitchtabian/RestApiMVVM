@@ -1,65 +1,43 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
-import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.arch.lifecycle.ViewModel;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
-public class RecipeViewModel extends AndroidViewModel {
+public class RecipeViewModel extends ViewModel {
 
-    private MediatorLiveData<String> mErrorMessage;
-    private MediatorLiveData<Recipe> mRecipe;
     private RecipeRepository mRecipeRepository;
+    private boolean mDidRetrieveRecipe;
 
-    public RecipeViewModel(@NonNull Application application) {
-        super(application);
-        mRecipeRepository = RecipeRepository.getInstance(application);
-
-        mRecipe = new MediatorLiveData<>();
-        mRecipe.setValue(null);
-        LiveData<Recipe> recipe = mRecipeRepository.getRecipe();
-        mRecipe.addSource(recipe, new Observer<Recipe>() {
-            @Override
-            public void onChanged(@Nullable Recipe recipe) {
-                mRecipe.setValue(recipe);
-            }
-        });
-
-        mErrorMessage = new MediatorLiveData<>();
-        mErrorMessage.setValue(null);
-        LiveData<String> errorMessage = mRecipeRepository.getRecipeQueryError();
-        mErrorMessage.addSource(errorMessage, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String errorMessage) {
-                mErrorMessage.setValue(errorMessage);
-            }
-        });
+    public RecipeViewModel() {
+        mRecipeRepository = RecipeRepository.getInstance();
+        mDidRetrieveRecipe = false;
     }
 
     public LiveData<Recipe> getRecipe(){
-        return mRecipe;
+        return mRecipeRepository.getRecipe();
     }
 
-    public LiveData<String> getQueryError(){
-        return mErrorMessage;
+    public void searchRecipeById(String recipeId){
+        mRecipeRepository.searchRecipeById(recipeId);
     }
 
-    public void search(String recipeId) {
-        mRecipeRepository.searchForRecipe(recipeId);
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeRepository.isRecipeRequestTimedOut();
     }
+
+    public void setRetrievedRecipe(boolean retrievedRecipe){
+        mDidRetrieveRecipe = retrievedRecipe;
+    }
+
+    public boolean didRetrieveRecipe(){
+        return mDidRetrieveRecipe;
+    }
+
 }
-
-
-
-
-
 
 
 

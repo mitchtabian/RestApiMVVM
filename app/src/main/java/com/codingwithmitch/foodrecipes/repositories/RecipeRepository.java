@@ -1,181 +1,114 @@
 package com.codingwithmitch.foodrecipes.repositories;
 
-import android.app.Application;
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.codingwithmitch.foodrecipes.MyApplication;
+import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.requests.RecipeApi;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
-import com.codingwithmitch.foodrecipes.util.Constants;
-
-import java.io.IOException;
+import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
 
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
+import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
 public class RecipeRepository {
 
-    private static final String TAG = "RecipeRepository";
-
     private static RecipeRepository instance;
-    private RecipeApi mRecipeApi;
+    private RecipeApiClient mRecipeApiClient;
     private String mQuery;
     private int mPageNumber;
-
-    private MutableLiveData<List<Recipe>> mObservableRecipes = new MutableLiveData<>();
     private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
+    private MediatorLiveData<List<Recipe>> mRecipes = new MediatorLiveData<>();
 
-
-    private MutableLiveData<Recipe> mRecipe = new MutableLiveData<>();
-    private MutableLiveData<String> mRecipeQueryError = new MutableLiveData<>();
-
-    // Calls
-    private Call<RecipeSearchResponse> mRecipeSearchCall = null;
-
-    public static RecipeRepository getInstance(Application application){
+    public static RecipeRepository getInstance(){
         if(instance == null){
-            instance = new RecipeRepository(((MyApplication)application).getRetrofit().create(RecipeApi.class));
+            instance = new RecipeRepository();
         }
         return instance;
     }
 
-
-    private RecipeRepository(RecipeApi recipeApi) {
-        mRecipeApi = recipeApi;
-        mQuery = "";
-        mPageNumber = 0;
+    private RecipeRepository() {
+        mRecipeApiClient = RecipeApiClient.getInstance();
+        initMediators();
     }
 
-    public LiveData<List<Recipe>> getRecipes(){
-        return mObservableRecipes;
+    private void initMediators() {
+        // add source for the recipe list API query in RecipeListActivity
+        LiveData<List<Recipe>> recipeListApiSource = mRecipeApiClient.getRecipes();
+        mRecipes.addSource(recipeListApiSource, new Observer<List<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable List<Recipe> recipes) {
+                if (recipes != null) {
+                    mRecipes.setValue(recipes);
+                    doneQuery(recipes);
+                } else {
+                    // search database cache...
+                    doneQuery(null);
+                }
+            }
+        });
     }
 
-    public LiveData<Boolean> isQueryExhausted() {
+    private void doneQuery(List<Recipe> list){
+        if(list != null){
+            if(list.size() < 30 ){
+                mIsQueryExhausted.setValue(true);
+            }
+        }
+        else{
+            mIsQueryExhausted.setValue(true);
+        }
+    }
+
+    public LiveData<Boolean> isQueryExhausted(){
         return mIsQueryExhausted;
     }
 
+    public LiveData<List<Recipe>> getRecipes(){
+        return mRecipes;
+    }
+
     public LiveData<Recipe> getRecipe(){
-        return mRecipe;
+        return mRecipeApiClient.getRecipe();
     }
 
-    public LiveData<String> getRecipeQueryError(){
-        return mRecipeQueryError;
+    public void searchRecipeById(String recipeId){
+        mRecipeApiClient.searchRecipeById(recipeId);
     }
 
-    public void searchApi(String query, int pageNumber){
+    public void searchRecipesApi(String query, int pageNumber){
+        if(pageNumber == 0){
+            pageNumber = 1;
+        }
         mQuery = query;
         mPageNumber = pageNumber;
         mIsQueryExhausted.setValue(false);
-
-        mRecipeSearchCall = mRecipeApi
-                .searchRecipe(
-                        Constants.API_KEY,
-                        mQuery,
-                        String.valueOf(mPageNumber)
-                );
-
-        mRecipeSearchCall.enqueue(recipeListSearchCallback);
+        mRecipeApiClient.searchRecipesApi(query, pageNumber);
     }
 
     public void searchNextPage(){
-        searchApi(mQuery, mPageNumber + 1);
+        searchRecipesApi(mQuery, mPageNumber + 1);
     }
 
-
-    public void searchForRecipe(String recipeId){
-        Call<RecipeResponse> responseCall = mRecipeApi
-                .getRecipe(
-                        Constants.API_KEY,
-                        recipeId
-                );
-
-        responseCall.enqueue(singleRecipeCallback);
+    public void cancelRequest() {
+        mRecipeApiClient.cancelRequest();
     }
 
-    private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
-        @Override
-        public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                    mIsQueryExhausted.setValue(true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Set results to mRecipes list
-            try{
-                if(mPageNumber == 0){
-                    mObservableRecipes.setValue(response.body().getRecipes());
-                }
-                else{
-                    List<Recipe> currentRecipes = mObservableRecipes.getValue();
-                    currentRecipes.addAll(response.body().getRecipes());
-                    mObservableRecipes.setValue(currentRecipes);
-                }
-                if(response.body().getRecipes().size() < 30){
-                    mIsQueryExhausted.setValue(true);
-                }
-
-            }catch (NullPointerException e){
-                Log.e(TAG, "onResponse: NullPointerException: " + e.getMessage() );
-            }
-        }
-
-        @Override
-        public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
-            Log.d(TAG, "onResponse: ERROR: " + t.getMessage());
-            mIsQueryExhausted.setValue(true);
-        }
-    };
-
-    /**
-     * Callback for retrieving a single recipe given a recipe id.
-     */
-    private Callback<RecipeResponse>  singleRecipeCallback = new Callback<RecipeResponse>() {
-        @Override
-        public void onResponse(Call<RecipeResponse> call, Response<RecipeResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                    mRecipeQueryError.setValue("Couldn't retrieve the recipe. Check API key.");
-                    return;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            mRecipe.setValue(response.body().getRecipe());
-        }
-
-        @Override
-        public void onFailure(Call<RecipeResponse> call, Throwable t) {
-            mRecipeQueryError.setValue(t.getMessage());
-        }
-    };
-
-
-    public void cancelQuery() {
-        if(mRecipeSearchCall != null){
-            mRecipeSearchCall.cancel();
-            mRecipeSearchCall = null;
-        }
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeApiClient.isRecipeRequestTimedOut();
     }
+
 }
+
+
+
+
 
 
 
