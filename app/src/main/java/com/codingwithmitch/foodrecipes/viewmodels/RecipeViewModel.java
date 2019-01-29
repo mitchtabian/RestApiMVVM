@@ -1,54 +1,43 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
-import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
+import android.arch.lifecycle.ViewModel;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.repositories.RecipeCallback;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
-public class RecipeViewModel extends AndroidViewModel implements RecipeCallback {
+public class RecipeViewModel extends ViewModel {
 
-    private MutableLiveData<Throwable> mQueryError = new MutableLiveData<>();
-    private MutableLiveData<Recipe> mRecipe  = new MutableLiveData<>();
     private RecipeRepository mRecipeRepository;
+    private boolean mDidRetrieveRecipe;
 
-    public RecipeViewModel(@NonNull Application application) {
-        super(application);
-        mRecipeRepository = RecipeRepository.getInstance(application);
-        mRecipeRepository.setRecipeCallback(this);
+    public RecipeViewModel() {
+        mRecipeRepository = RecipeRepository.getInstance();
+        mDidRetrieveRecipe = false;
     }
 
     public LiveData<Recipe> getRecipe(){
-        return mRecipe;
+        return mRecipeRepository.getRecipe();
     }
 
-    public LiveData<Throwable> getQueryError(){
-        return mQueryError;
+    public void searchRecipeById(String recipeId){
+        mRecipeRepository.searchRecipeById(recipeId);
     }
 
-    public void search(String recipeId) {
-        mRecipeRepository.searchForRecipe(recipeId);
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeRepository.isRecipeRequestTimedOut();
     }
 
-    @Override
-    public void setRecipe(Recipe recipe) {
-        mRecipe.setValue(recipe);
+    public void setRetrievedRecipe(boolean retrievedRecipe){
+        mDidRetrieveRecipe = retrievedRecipe;
     }
 
-    @Override
-    public void onError(Throwable t) {
-        mQueryError.setValue(t);
+    public boolean didRetrieveRecipe(){
+        return mDidRetrieveRecipe;
     }
+
 }
-
-
-
-
-
 
 
 

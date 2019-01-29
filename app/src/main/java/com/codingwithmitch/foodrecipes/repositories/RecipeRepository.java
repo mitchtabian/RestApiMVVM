@@ -1,165 +1,77 @@
 package com.codingwithmitch.foodrecipes.repositories;
 
-import android.app.Application;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.codingwithmitch.foodrecipes.MyApplication;
+import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.requests.RecipeApi;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
-import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
-import com.codingwithmitch.foodrecipes.util.Constants;
+import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
-public class RecipeRepository implements RequestCancelListener{
-
-    private static final String TAG = "RecipeRepository";
+public class RecipeRepository {
 
     private static RecipeRepository instance;
-    private RecipeApi mRecipeApi;
-    private RecipeListCallback mRecipeListCallback;
-    private RecipeCallback mRecipeCallback;
+    private RecipeApiClient mRecipeApiClient;
     private String mQuery;
     private int mPageNumber;
 
-    // Calls
-    private Call<RecipeSearchResponse> mRecipeSearchCall = null;
-
-    public static RecipeRepository getInstance(Application application){
+    public static RecipeRepository getInstance(){
         if(instance == null){
-            instance = new RecipeRepository(((MyApplication)application).getRetrofit().create(RecipeApi.class));
+            instance = new RecipeRepository();
         }
         return instance;
     }
 
-
-    private RecipeRepository(RecipeApi recipeApi) {
-        mRecipeApi = recipeApi;
-        mQuery = "";
-        mPageNumber = 0;
+    private RecipeRepository() {
+        mRecipeApiClient = RecipeApiClient.getInstance();
     }
 
-    public void setRecipeCallback(RecipeCallback callback){
-        this.mRecipeCallback = callback;
+    public LiveData<List<Recipe>> getRecipes(){
+        return mRecipeApiClient.getRecipes();
     }
 
-    public void setRecipeListCallback(RecipeListCallback callback){
-        mRecipeListCallback = callback;
+    public LiveData<Recipe> getRecipe(){
+        return mRecipeApiClient.getRecipe();
     }
 
-    public void searchApi(String query, int pageNumber){
+    public void searchRecipeById(String recipeId){
+        mRecipeApiClient.searchRecipeById(recipeId);
+    }
+
+    public void searchRecipesApi(String query, int pageNumber){
+        if(pageNumber == 0){
+            pageNumber = 1;
+        }
         mQuery = query;
         mPageNumber = pageNumber;
-
-        mRecipeListCallback.onQueryStart();
-        mRecipeSearchCall = mRecipeApi
-                .searchRecipe(
-                        Constants.API_KEY,
-                        mQuery,
-                        String.valueOf(mPageNumber)
-                );
-
-        mRecipeSearchCall.enqueue(recipeListSearchCallback);
+        mRecipeApiClient.searchRecipesApi(query, pageNumber);
     }
 
     public void searchNextPage(){
-        searchApi(mQuery, mPageNumber + 1);
+        searchRecipesApi(mQuery, mPageNumber + 1);
     }
 
-
-    public void searchForRecipe(String recipeId){
-        Call<RecipeResponse> responseCall = mRecipeApi
-                .getRecipe(
-                        Constants.API_KEY,
-                        recipeId
-                );
-
-        responseCall.enqueue(singleRecipeCallback);
+    public void cancelRequest() {
+        mRecipeApiClient.cancelRequest();
     }
 
-    /**
-     * Callback for retrieving a single recipe given a recipe id.
-     */
-    private Callback<RecipeResponse>  singleRecipeCallback = new Callback<RecipeResponse>() {
-        @Override
-        public void onResponse(Call<RecipeResponse> call, Response<RecipeResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                    mRecipeCallback.onError(null);
-                    return;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            mRecipeCallback.setRecipe(response.body().getRecipe());
-        }
-
-        @Override
-        public void onFailure(Call<RecipeResponse> call, Throwable t) {
-            mRecipeCallback.onError(t);
-        }
-    };
-
-
-    private Callback<RecipeSearchResponse> recipeListSearchCallback = new Callback<RecipeSearchResponse>() {
-        @Override
-        public void onResponse(Call<RecipeSearchResponse> call, Response<RecipeSearchResponse> response) {
-            if(response.code() == 200){
-                Log.d(TAG, "onResponse: " + response.body().toString());
-            }
-            else {
-                try {
-                    Log.d(TAG, "onResponse: " + response.errorBody().string());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Set results to mRecipes list
-            try{
-                if(mPageNumber == 0){
-                    mRecipeListCallback.setRecipes(response.body().getRecipes());
-                }
-                else{
-                    List<Recipe> newRecipes = new ArrayList<>(response.body().getRecipes());
-                    mRecipeListCallback.appendRecipes(newRecipes);
-                }
-
-            }catch (NullPointerException e){
-                Log.e(TAG, "onResponse: NullPointerException: " + e.getMessage() );
-            }
-
-            mRecipeListCallback.onQueryDone();
-        }
-
-        @Override
-        public void onFailure(Call<RecipeSearchResponse> call, Throwable t) {
-            Log.d(TAG, "onResponse: ERROR: " + t.getMessage());
-            mRecipeListCallback.onQueryDone();
-        }
-    };
-
-    @Override
-    public void onCancel() {
-        if(mRecipeSearchCall != null){
-            mRecipeSearchCall.cancel();
-            mRecipeListCallback.onQueryDone();
-            mRecipeSearchCall = null;
-        }
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeApiClient.isRecipeRequestTimedOut();
     }
+
 }
+
+
+
+
 
 
 
