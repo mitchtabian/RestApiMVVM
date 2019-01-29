@@ -17,10 +17,16 @@ public class RecipeListViewModel extends ViewModel {
     private RecipeRepository mRecipeRepository;
     private boolean mIsViewingRecipes;
     private boolean mIsPerformingQuery;
+    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
 
     public RecipeListViewModel() {
         mRecipeRepository = RecipeRepository.getInstance();
         mIsPerformingQuery = false;
+        mIsQueryExhausted.setValue(false);
+    }
+
+    public LiveData<Boolean> isQueryExhausted(){
+        return mRecipeRepository.isQueryExhausted();
     }
 
     public LiveData<List<Recipe>> getRecipes() {
