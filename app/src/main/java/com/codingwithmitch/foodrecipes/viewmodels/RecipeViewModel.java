@@ -9,9 +9,11 @@ import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 public class RecipeViewModel extends ViewModel {
 
     private RecipeRepository mRecipeRepository;
+    private boolean mDidRetrieveRecipe;
 
     public RecipeViewModel() {
         mRecipeRepository = RecipeRepository.getInstance();
+        mDidRetrieveRecipe = false;
     }
 
     public LiveData<Recipe> getRecipe(){
@@ -20,6 +22,18 @@ public class RecipeViewModel extends ViewModel {
 
     public void searchRecipeById(String recipeId){
         mRecipeRepository.searchRecipeById(recipeId);
+    }
+
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeRepository.isRecipeRequestTimedOut();
+    }
+
+    public void setRetrievedRecipe(boolean retrievedRecipe){
+        mDidRetrieveRecipe = retrievedRecipe;
+    }
+
+    public boolean didRetrieveRecipe(){
+        return mDidRetrieveRecipe;
     }
 }
 

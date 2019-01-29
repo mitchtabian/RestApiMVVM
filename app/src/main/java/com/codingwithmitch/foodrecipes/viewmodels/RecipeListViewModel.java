@@ -64,6 +64,7 @@ public class RecipeListViewModel extends ViewModel {
             mRecipeRepository.searchNextPage();
         }
     }
+
 }
 
 

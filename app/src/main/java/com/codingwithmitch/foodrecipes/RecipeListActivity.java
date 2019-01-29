@@ -67,6 +67,7 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             }
         });
 
+
     }
 
     private void initRecyclerView(){
