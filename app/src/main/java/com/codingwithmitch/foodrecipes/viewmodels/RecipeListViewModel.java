@@ -66,7 +66,8 @@ public class RecipeListViewModel extends ViewModel {
     public void searchNextPage(){
         Log.d(TAG, "searchNextPage: called.");
         if(!mIsPerformingQuery
-                && mIsViewingRecipes){
+                && mIsViewingRecipes
+                && !isQueryExhausted().getValue()){
             mRecipeRepository.searchNextPage();
         }
     }
