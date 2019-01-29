@@ -75,6 +75,7 @@ public class RecipeApiClient {
     }
 
     public void searchRecipeById(String recipeId){
+        mRecipeRequestTimedOut.setValue(false);
         if(mRetrieveRecipeRunnable != null){
             mRetrieveRecipeRunnable = null;
         }

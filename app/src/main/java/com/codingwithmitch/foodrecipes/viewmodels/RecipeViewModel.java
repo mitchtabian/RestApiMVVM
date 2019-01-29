@@ -1,6 +1,7 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
@@ -35,6 +36,7 @@ public class RecipeViewModel extends ViewModel {
     public boolean didRetrieveRecipe(){
         return mDidRetrieveRecipe;
     }
+
 }
 
 

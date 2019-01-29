@@ -66,6 +66,7 @@ public class RecipeRepository {
     public LiveData<Boolean> isRecipeRequestTimedOut(){
         return mRecipeApiClient.isRecipeRequestTimedOut();
     }
+
 }
 
 
