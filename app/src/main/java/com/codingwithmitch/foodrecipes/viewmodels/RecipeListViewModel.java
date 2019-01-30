@@ -1,6 +1,7 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
@@ -16,7 +17,7 @@ public class RecipeListViewModel extends ViewModel {
         mRecipeRepository = RecipeRepository.getInstance();
     }
 
-    public LiveData<List<Recipe>> getRecipes() {
+    public LiveData<List<Recipe>> getRecipes(){
         return mRecipeRepository.getRecipes();
     }
 
@@ -24,22 +25,3 @@ public class RecipeListViewModel extends ViewModel {
         mRecipeRepository.searchRecipesApi(query, pageNumber);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

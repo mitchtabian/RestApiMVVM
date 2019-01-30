@@ -9,6 +9,7 @@ import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -19,7 +20,6 @@ import retrofit2.Response;
 
 import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
-
 public class RecipeApiClient {
 
     private static final String TAG = "RecipeApiClient";
@@ -28,7 +28,6 @@ public class RecipeApiClient {
     private MutableLiveData<List<Recipe>> mRecipes;
     private RetrieveRecipesRunnable mRetrieveRecipesRunnable;
 
-
     public static RecipeApiClient getInstance(){
         if(instance == null){
             instance = new RecipeApiClient();
@@ -36,7 +35,7 @@ public class RecipeApiClient {
         return instance;
     }
 
-    private RecipeApiClient() {
+    private RecipeApiClient(){
         mRecipes = new MutableLiveData<>();
     }
 
@@ -45,17 +44,15 @@ public class RecipeApiClient {
     }
 
     public void searchRecipesApi(String query, int pageNumber){
-        if(mRetrieveRecipesRunnable != null){
-            mRetrieveRecipesRunnable = null;
+        if(mRetrieveRecipesRunnable == null){
+            mRetrieveRecipesRunnable = new RetrieveRecipesRunnable(query, pageNumber);
         }
-        mRetrieveRecipesRunnable = new RetrieveRecipesRunnable(query, pageNumber);
-        final Future handler = AppExecutors.get().networkIO().submit(mRetrieveRecipesRunnable);
+        final Future handler = AppExecutors.getInstance().networkIO().submit(mRetrieveRecipesRunnable);
 
-        // Set a timeout for the data refresh
-        AppExecutors.get().networkIO().schedule(new Runnable() {
+        AppExecutors.getInstance().networkIO().schedule(new Runnable() {
             @Override
             public void run() {
-                // let the user know it timed out
+                // let the user know its timed out
                 handler.cancel(true);
             }
         }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -65,9 +62,9 @@ public class RecipeApiClient {
 
         private String query;
         private int pageNumber;
-        private boolean cancelRequest;
+        boolean cancelRequest;
 
-        private RetrieveRecipesRunnable(String query, int pageNumber) {
+        public RetrieveRecipesRunnable(String query, int pageNumber) {
             this.query = query;
             this.pageNumber = pageNumber;
             cancelRequest = false;
@@ -75,7 +72,6 @@ public class RecipeApiClient {
 
         @Override
         public void run() {
-
             try {
                 Response response = getRecipes(query, pageNumber).execute();
                 if(cancelRequest){
@@ -94,37 +90,30 @@ public class RecipeApiClient {
                 }
                 else{
                     String error = response.errorBody().string();
-                    Log.e(TAG, "run: error: " + error);
+                    Log.e(TAG, "run: " + error );
                     mRecipes.postValue(null);
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 e.printStackTrace();
                 mRecipes.postValue(null);
             }
+
         }
 
         private Call<RecipeSearchResponse> getRecipes(String query, int pageNumber){
             return ServiceGenerator.getRecipeApi().searchRecipe(
                     Constants.API_KEY,
                     query,
-                    String.valueOf(pageNumber));
+                    String.valueOf(pageNumber)
+            );
         }
 
         private void cancelRequest(){
-            Log.d(TAG, "cancelRequest: canceling the retrieval query");
+            Log.d(TAG, "cancelRequest: canceling the search request.");
             cancelRequest = true;
         }
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 

@@ -7,16 +7,23 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 
-
 import com.codingwithmitch.foodrecipes.models.Recipe;
-
+import com.codingwithmitch.foodrecipes.requests.RecipeApi;
+import com.codingwithmitch.foodrecipes.requests.ServiceGenerator;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
+import com.codingwithmitch.foodrecipes.util.Constants;
 import com.codingwithmitch.foodrecipes.util.Testing;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeListViewModel;
 
-
+import java.io.IOError;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RecipeListActivity extends BaseActivity {
 
@@ -42,22 +49,30 @@ public class RecipeListActivity extends BaseActivity {
     }
 
     private void subscribeObservers(){
-
         mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
                 if(recipes != null){
-                    Testing.printRecipes("network test", recipes);
+                    Testing.printRecipes(recipes, "recipes test");
                 }
             }
         });
     }
 
-    private void testRetrofitRequest(){
-        mRecipeListViewModel.searchRecipesApi("chicken", 1);
+    private void searchRecipesApi(String query, int pageNumber){
+        mRecipeListViewModel.searchRecipesApi(query, pageNumber);
     }
 
+    private void testRetrofitRequest(){
+        searchRecipesApi("chicken breast", 1);
+    }
 }
+
+
+
+
+
+
 
 
 
