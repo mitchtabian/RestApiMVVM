@@ -8,9 +8,9 @@ import java.util.List;
 
 public class Testing {
 
-    public static void printRecipes(String tag, List<Recipe> list){
+    public static void printRecipes(List<Recipe>list, String tag){
         for(Recipe recipe: list){
-            Log.d(tag, "printRecipes: " + recipe.getRecipe_id() + ", " + recipe.getTitle());
+            Log.d(tag, "onChanged: " + recipe.getTitle());
         }
     }
 }
