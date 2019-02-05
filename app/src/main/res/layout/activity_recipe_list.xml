@@ -3,10 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f2f2f2"
     tools:context=".RecipeListActivity">
 
     <android.support.design.widget.AppBarLayout
@@ -14,17 +12,16 @@
         android:layout_height="wrap_content">
 
         <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:id="@+id/toolbar"
             app:layout_scrollFlags="scroll|enterAlways">
 
             <android.support.v7.widget.SearchView
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:id="@+id/search_view"
-                app:queryHint="chicken..."
-                >
+                app:queryHint="chicken breast...">
 
             </android.support.v7.widget.SearchView>
 
@@ -33,11 +30,14 @@
     </android.support.design.widget.AppBarLayout>
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/recipe_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:id="@+id/recipe_list"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     </android.support.v7.widget.RecyclerView>
 
 </android.support.design.widget.CoordinatorLayout>
+
+
+

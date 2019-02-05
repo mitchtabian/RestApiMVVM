@@ -5,21 +5,19 @@ import android.os.Parcelable;
 
 import java.util.Arrays;
 
-public class Recipe implements Parcelable{
+public class Recipe implements Parcelable {
 
     private String title;
     private String publisher;
-    private String publisher_url;
     private String[] ingredients;
     private String recipe_id;
     private String image_url;
     private float social_rank;
 
-    public Recipe(String title, String publisher, String publisher_url, String[] ingredients,
-                  String recipe_id, String image_url, float social_rank) {
+    public Recipe(String title, String publisher, String[] ingredients, String recipe_id,
+                  String image_url, float social_rank) {
         this.title = title;
         this.publisher = publisher;
-        this.publisher_url = publisher_url;
         this.ingredients = ingredients;
         this.recipe_id = recipe_id;
         this.image_url = image_url;
@@ -32,7 +30,6 @@ public class Recipe implements Parcelable{
     protected Recipe(Parcel in) {
         title = in.readString();
         publisher = in.readString();
-        publisher_url = in.readString();
         ingredients = in.createStringArray();
         recipe_id = in.readString();
         image_url = in.readString();
@@ -51,14 +48,6 @@ public class Recipe implements Parcelable{
         }
     };
 
-    public String getRecipe_id() {
-        return recipe_id;
-    }
-
-    public void setRecipe_id(String recipe_id) {
-        this.recipe_id = recipe_id;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -75,20 +64,20 @@ public class Recipe implements Parcelable{
         this.publisher = publisher;
     }
 
-    public String getPublisher_url() {
-        return publisher_url;
-    }
-
-    public void setPublisher_url(String publisher_url) {
-        this.publisher_url = publisher_url;
-    }
-
     public String[] getIngredients() {
         return ingredients;
     }
 
     public void setIngredients(String[] ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public String getRecipe_id() {
+        return recipe_id;
+    }
+
+    public void setRecipe_id(String recipe_id) {
+        this.recipe_id = recipe_id;
     }
 
     public String getImage_url() {
@@ -107,6 +96,17 @@ public class Recipe implements Parcelable{
         this.social_rank = social_rank;
     }
 
+    @Override
+    public String toString() {
+        return "Recipe{" +
+                "title='" + title + '\'' +
+                ", publisher='" + publisher + '\'' +
+                ", ingredients=" + Arrays.toString(ingredients) +
+                ", recipe_id='" + recipe_id + '\'' +
+                ", image_url='" + image_url + '\'' +
+                ", social_rank=" + social_rank +
+                '}';
+    }
 
     @Override
     public int describeContents() {
@@ -114,26 +114,26 @@ public class Recipe implements Parcelable{
     }
 
     @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(title);
-        parcel.writeString(publisher);
-        parcel.writeString(publisher_url);
-        parcel.writeStringArray(ingredients);
-        parcel.writeString(recipe_id);
-        parcel.writeString(image_url);
-        parcel.writeFloat(social_rank);
-    }
-
-    @Override
-    public String toString() {
-        return "Recipe{" +
-                "title='" + title + '\'' +
-                ", publisher='" + publisher + '\'' +
-                ", publisher_url='" + publisher_url + '\'' +
-                ", ingredients=" + Arrays.toString(ingredients) +
-                ", recipe_id='" + recipe_id + '\'' +
-                ", image_url='" + image_url + '\'' +
-                ", social_rank=" + social_rank +
-                '}';
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(publisher);
+        dest.writeStringArray(ingredients);
+        dest.writeString(recipe_id);
+        dest.writeString(image_url);
+        dest.writeFloat(social_rank);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
