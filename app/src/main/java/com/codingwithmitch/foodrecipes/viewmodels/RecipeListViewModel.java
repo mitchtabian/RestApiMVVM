@@ -12,8 +12,6 @@ import java.util.List;
 
 public class RecipeListViewModel extends ViewModel {
 
-    private static final String TAG = "RecipeListViewModel";
-
     private RecipeRepository mRecipeRepository;
     private boolean mIsViewingRecipes;
     private boolean mIsPerformingQuery;
@@ -23,7 +21,7 @@ public class RecipeListViewModel extends ViewModel {
         mIsPerformingQuery = false;
     }
 
-    public LiveData<List<Recipe>> getRecipes() {
+    public LiveData<List<Recipe>> getRecipes(){
         return mRecipeRepository.getRecipes();
     }
 
@@ -33,7 +31,13 @@ public class RecipeListViewModel extends ViewModel {
         mRecipeRepository.searchRecipesApi(query, pageNumber);
     }
 
-    public boolean isViewingRecipes() {
+    public void searchNextPage(){
+        if(!mIsPerformingQuery && mIsViewingRecipes){
+            mRecipeRepository.searchNextPage();
+        }
+    }
+
+    public boolean isViewingRecipes(){
         return mIsViewingRecipes;
     }
 
@@ -41,14 +45,19 @@ public class RecipeListViewModel extends ViewModel {
         mIsViewingRecipes = isViewingRecipes;
     }
 
-    public void setIsPerformingQuery(boolean isPerformingQuery){
+    public void setIsPerformingQuery(Boolean isPerformingQuery){
         mIsPerformingQuery = isPerformingQuery;
+    }
+
+    public boolean isPerformingQuery(){
+        return mIsPerformingQuery;
     }
 
     public boolean onBackPressed(){
         if(mIsPerformingQuery){
-            Log.d(TAG, "onBackPressed: canceling the request");
+            // cancel the query
             mRecipeRepository.cancelRequest();
+            mIsPerformingQuery = false;
         }
         if(mIsViewingRecipes){
             mIsViewingRecipes = false;
@@ -56,20 +65,7 @@ public class RecipeListViewModel extends ViewModel {
         }
         return true;
     }
-
-    public void searchNextPage(){
-        Log.d(TAG, "searchNextPage: called.");
-        if(!mIsPerformingQuery
-                && mIsViewingRecipes){
-            mRecipeRepository.searchNextPage();
-        }
-    }
-
 }
-
-
-
-
 
 
 
