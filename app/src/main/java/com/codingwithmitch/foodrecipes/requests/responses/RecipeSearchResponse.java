@@ -9,11 +9,11 @@ import java.util.List;
 public class RecipeSearchResponse {
 
     @SerializedName("count")
-    @Expose
+    @Expose()
     private int count;
 
     @SerializedName("recipes")
-    @Expose
+    @Expose()
     private List<Recipe> recipes;
 
     public int getCount() {
