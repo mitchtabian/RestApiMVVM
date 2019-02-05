@@ -12,25 +12,21 @@ import java.util.List;
 
 public class RecipeListViewModel extends ViewModel {
 
-    private static final String TAG = "RecipeListViewModel";
-
     private RecipeRepository mRecipeRepository;
     private boolean mIsViewingRecipes;
     private boolean mIsPerformingQuery;
-    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
 
     public RecipeListViewModel() {
         mRecipeRepository = RecipeRepository.getInstance();
         mIsPerformingQuery = false;
-        mIsQueryExhausted.setValue(false);
+    }
+
+    public LiveData<List<Recipe>> getRecipes(){
+        return mRecipeRepository.getRecipes();
     }
 
     public LiveData<Boolean> isQueryExhausted(){
         return mRecipeRepository.isQueryExhausted();
-    }
-
-    public LiveData<List<Recipe>> getRecipes() {
-        return mRecipeRepository.getRecipes();
     }
 
     public void searchRecipesApi(String query, int pageNumber){
@@ -39,32 +35,7 @@ public class RecipeListViewModel extends ViewModel {
         mRecipeRepository.searchRecipesApi(query, pageNumber);
     }
 
-    public boolean isViewingRecipes() {
-        return mIsViewingRecipes;
-    }
-
-    public void setIsViewingRecipes(boolean isViewingRecipes){
-        mIsViewingRecipes = isViewingRecipes;
-    }
-
-    public void setIsPerformingQuery(boolean isPerformingQuery){
-        mIsPerformingQuery = isPerformingQuery;
-    }
-
-    public boolean onBackPressed(){
-        if(mIsPerformingQuery){
-            Log.d(TAG, "onBackPressed: canceling the request");
-            mRecipeRepository.cancelRequest();
-        }
-        if(mIsViewingRecipes){
-            mIsViewingRecipes = false;
-            return false;
-        }
-        return true;
-    }
-
     public void searchNextPage(){
-        Log.d(TAG, "searchNextPage: called.");
         if(!mIsPerformingQuery
                 && mIsViewingRecipes
                 && !isQueryExhausted().getValue()){
@@ -72,11 +43,35 @@ public class RecipeListViewModel extends ViewModel {
         }
     }
 
+    public boolean isViewingRecipes(){
+        return mIsViewingRecipes;
+    }
+
+    public void setIsViewingRecipes(boolean isViewingRecipes){
+        mIsViewingRecipes = isViewingRecipes;
+    }
+
+    public void setIsPerformingQuery(Boolean isPerformingQuery){
+        mIsPerformingQuery = isPerformingQuery;
+    }
+
+    public boolean isPerformingQuery(){
+        return mIsPerformingQuery;
+    }
+
+    public boolean onBackPressed(){
+        if(mIsPerformingQuery){
+            // cancel the query
+            mRecipeRepository.cancelRequest();
+            mIsPerformingQuery = false;
+        }
+        if(mIsViewingRecipes){
+            mIsViewingRecipes = false;
+            return false;
+        }
+        return true;
+    }
 }
-
-
-
-
 
 
 

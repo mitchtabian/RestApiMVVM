@@ -7,15 +7,10 @@ import android.arch.lifecycle.Observer;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
 
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static com.codingwithmitch.foodrecipes.util.Constants.NETWORK_TIMEOUT;
 
 public class RecipeRepository {
 
@@ -33,22 +28,23 @@ public class RecipeRepository {
         return instance;
     }
 
-    private RecipeRepository() {
+    private RecipeRepository(){
         mRecipeApiClient = RecipeApiClient.getInstance();
         initMediators();
     }
 
-    private void initMediators() {
-        // add source for the recipe list API query in RecipeListActivity
+    private void initMediators(){
         LiveData<List<Recipe>> recipeListApiSource = mRecipeApiClient.getRecipes();
         mRecipes.addSource(recipeListApiSource, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                if (recipes != null) {
+
+                if(recipes != null){
                     mRecipes.setValue(recipes);
                     doneQuery(recipes);
-                } else {
-                    // search database cache...
+                }
+                else{
+                    // search database cache
                     doneQuery(null);
                 }
             }
@@ -57,7 +53,7 @@ public class RecipeRepository {
 
     private void doneQuery(List<Recipe> list){
         if(list != null){
-            if(list.size() < 30 ){
+            if (list.size() % 30 != 0) {
                 mIsQueryExhausted.setValue(true);
             }
         }
@@ -82,6 +78,7 @@ public class RecipeRepository {
         mRecipeApiClient.searchRecipeById(recipeId);
     }
 
+
     public void searchRecipesApi(String query, int pageNumber){
         if(pageNumber == 0){
             pageNumber = 1;
@@ -96,31 +93,14 @@ public class RecipeRepository {
         searchRecipesApi(mQuery, mPageNumber + 1);
     }
 
-    public void cancelRequest() {
+    public void cancelRequest(){
         mRecipeApiClient.cancelRequest();
     }
 
     public LiveData<Boolean> isRecipeRequestTimedOut(){
         return mRecipeApiClient.isRecipeRequestTimedOut();
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,5 +1,6 @@
 package com.codingwithmitch.foodrecipes.adapters;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -7,16 +8,13 @@ import android.widget.TextView;
 
 import com.codingwithmitch.foodrecipes.R;
 
-/**
- * ViewHolder for Recipe List items
- */
-public class RecipeViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
-{
+public class RecipeViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
     TextView title, publisher, socialScore;
     AppCompatImageView image;
     OnRecipeListener onRecipeListener;
 
-    public RecipeViewHolder(View itemView, OnRecipeListener onRecipeListener){
+    public RecipeViewHolder(@NonNull View itemView, OnRecipeListener onRecipeListener) {
         super(itemView);
 
         this.onRecipeListener = onRecipeListener;
@@ -34,3 +32,8 @@ public class RecipeViewHolder extends RecyclerView.ViewHolder implements View.On
         onRecipeListener.onRecipeClick(getAdapterPosition());
     }
 }
+
+
+
+
+

@@ -26,26 +26,20 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
 
-    public RecipeRecyclerAdapter(OnRecipeListener onRecipeListener) {
-        mOnRecipeListener = onRecipeListener;
-        mRecipes = new ArrayList<>();
+    public RecipeRecyclerAdapter(OnRecipeListener mOnRecipeListener) {
+        this.mOnRecipeListener = mOnRecipeListener;
     }
-
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = null;
 
-        switch (i) { // i is the view type constant
+        View view = null;
+        switch (i){
+
             case RECIPE_TYPE:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
                 return new RecipeViewHolder(view, mOnRecipeListener);
-            }
-
-            case CATEGORY_TYPE:{
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
-                return new CategoryViewHolder(view, mOnRecipeListener);
             }
 
             case LOADING_TYPE:{
@@ -58,45 +52,52 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 return new SearchExhaustedViewHolder(view);
             }
 
+            case CATEGORY_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
+                return new CategoryViewHolder(view, mOnRecipeListener);
+            }
+
             default:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
                 return new RecipeViewHolder(view, mOnRecipeListener);
             }
         }
+
+
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
 
         int itemViewType = getItemViewType(i);
-        if(itemViewType == RECIPE_TYPE) {
-            // set the image
-            RequestOptions options = new RequestOptions()
-                    .centerCrop()
-                    .error(R.drawable.ic_launcher_background);
+        if(itemViewType == RECIPE_TYPE){
+            RequestOptions requestOptions = new RequestOptions()
+                    .placeholder(R.drawable.ic_launcher_background);
 
-            Glide.with(((RecipeViewHolder) viewHolder).itemView)
-                    .setDefaultRequestOptions(options)
+            Glide.with(viewHolder.itemView.getContext())
+                    .setDefaultRequestOptions(requestOptions)
                     .load(mRecipes.get(i).getImage_url())
-                    .into(((RecipeViewHolder) viewHolder).image);
+                    .into(((RecipeViewHolder)viewHolder).image);
 
-            ((RecipeViewHolder) viewHolder).title.setText(mRecipes.get(i).getTitle());
-            ((RecipeViewHolder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
-            ((RecipeViewHolder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+            ((RecipeViewHolder)viewHolder).title.setText(mRecipes.get(i).getTitle());
+            ((RecipeViewHolder)viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
+            ((RecipeViewHolder)viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
         }
         else if(itemViewType == CATEGORY_TYPE){
-            RequestOptions options = new RequestOptions()
-                    .centerCrop()
-                    .error(R.drawable.ic_launcher_background);
+
+            RequestOptions requestOptions = new RequestOptions()
+                    .placeholder(R.drawable.ic_launcher_background);
 
             Uri path = Uri.parse("android.resource://com.codingwithmitch.foodrecipes/drawable/" + mRecipes.get(i).getImage_url());
-            Glide.with(((CategoryViewHolder)viewHolder).itemView)
-                    .setDefaultRequestOptions(options)
+            Glide.with(viewHolder.itemView.getContext())
+                    .setDefaultRequestOptions(requestOptions)
                     .load(path)
                     .into(((CategoryViewHolder)viewHolder).categoryImage);
 
             ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
+
         }
+
     }
 
     @Override
@@ -107,26 +108,35 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         else if(mRecipes.get(position).getTitle().equals("LOADING...")){
             return LOADING_TYPE;
         }
+        else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
+            return EXHAUSTED_TYPE;
+        }
         else if(position == mRecipes.size() - 1
                 && position != 0
                 && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
             return LOADING_TYPE;
-        }
-        else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
-            return EXHAUSTED_TYPE;
         }
         else{
             return RECIPE_TYPE;
         }
     }
 
-    @Override
-    public int getItemCount() {
-        if(mRecipes != null){
-            return mRecipes.size();
-        }
-        else{
-            return 0;
+    public void setQueryExhausted(){
+        hideLoading();
+        Recipe exhaustedRecipe = new Recipe();
+        exhaustedRecipe.setTitle("EXHAUSTED...");
+        mRecipes.add(exhaustedRecipe);
+        notifyDataSetChanged();
+    }
+
+    private void hideLoading(){
+        if(isLoading()){
+            for(Recipe recipe: mRecipes){
+                if(recipe.getTitle().equals("LOADING...")){
+                    mRecipes.remove(recipe);
+                }
+            }
+            notifyDataSetChanged();
         }
     }
 
@@ -141,34 +151,20 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
-    public void hideLoading(){
-        if(isLoading()){
-            for(Recipe recipe: mRecipes){
-                if(recipe.getTitle().equals("LOADING...")){
-                    mRecipes.remove(recipe);
-                }
-            }
-            notifyDataSetChanged();
-        }
-    }
-
     private boolean isLoading(){
-        if(mRecipes.size() > 0){
-            if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
-                return true;
+        if(mRecipes != null){
+            if(mRecipes.size() > 0){
+                if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public void setRecipes(List<Recipe> recipes){
-        mRecipes = recipes;
-        notifyDataSetChanged();
-    }
-
     public void displaySearchCategories(){
         List<Recipe> categories = new ArrayList<>();
-        for(int i = 0; i < Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
+        for(int i = 0; i< Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
             Recipe recipe = new Recipe();
             recipe.setTitle(Constants.DEFAULT_SEARCH_CATEGORIES[i]);
             recipe.setImage_url(Constants.DEFAULT_SEARCH_CATEGORY_IMAGES[i]);
@@ -179,32 +175,29 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         notifyDataSetChanged();
     }
 
+    @Override
+    public int getItemCount() {
+        if(mRecipes != null){
+            return mRecipes.size();
+        }
+        return 0;
+    }
+
+    public void setRecipes(List<Recipe> recipes){
+        mRecipes = recipes;
+        notifyDataSetChanged();
+    }
 
     public Recipe getSelectedRecipe(int position){
-        if(mRecipes.size() > 0){
-            return mRecipes.get(position);
+        if(mRecipes != null){
+            if(mRecipes.size() > 0){
+                return mRecipes.get(position);
+            }
         }
         return null;
     }
 
-    public void setQueryExhausted(){
-        hideLoading();
-        Recipe exhaustedMarkerRecipe = new Recipe();
-        exhaustedMarkerRecipe.setTitle("EXHAUSTED...");
-        mRecipes.add(exhaustedMarkerRecipe);
-        notifyDataSetChanged();
-    }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

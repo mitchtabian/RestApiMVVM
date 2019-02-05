@@ -17,11 +17,10 @@ public interface RecipeApi {
             @Query("page") String page
     );
 
-    // GET SPECIFIC RECIPE
+    // GET RECIPE REQUEST
     @GET("api/get")
     Call<RecipeResponse> getRecipe(
             @Query("key") String key,
             @Query("rId") String recipe_id
     );
-
 }
