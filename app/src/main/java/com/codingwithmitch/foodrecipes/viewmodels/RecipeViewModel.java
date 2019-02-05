@@ -22,16 +22,3 @@ public class RecipeViewModel extends ViewModel {
         mRecipeRepository.searchRecipeById(recipeId);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

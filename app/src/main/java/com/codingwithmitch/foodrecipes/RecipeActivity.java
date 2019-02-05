@@ -6,10 +6,14 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
 
@@ -21,9 +25,10 @@ public class RecipeActivity extends BaseActivity {
     private AppCompatImageView mRecipeImage;
     private TextView mRecipeTitle, mRecipeRank;
     private LinearLayout mRecipeIngredientsContainer;
-    private ScrollView mParent;
+    private ScrollView mScrollView;
 
     private RecipeViewModel mRecipeViewModel;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,10 +38,11 @@ public class RecipeActivity extends BaseActivity {
         mRecipeTitle = findViewById(R.id.recipe_title);
         mRecipeRank = findViewById(R.id.recipe_social_score);
         mRecipeIngredientsContainer = findViewById(R.id.ingredients_container);
-        mParent = findViewById(R.id.parent);
+        mScrollView = findViewById(R.id.parent);
 
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
+        showProgressBar(true);
         subscribeObservers();
         getIncomingIntent();
     }
@@ -44,6 +50,7 @@ public class RecipeActivity extends BaseActivity {
     private void getIncomingIntent(){
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
+            Log.d(TAG, "getIncomingIntent: " + recipe.getTitle());
             mRecipeViewModel.searchRecipeById(recipe.getRecipe_id());
         }
     }
@@ -53,10 +60,8 @@ public class RecipeActivity extends BaseActivity {
             @Override
             public void onChanged(@Nullable Recipe recipe) {
                 if(recipe != null){
-                    Log.d(TAG, "onChanged: ---------------------------------------------------------------------------");
-                    Log.d(TAG, "onChanged: " + recipe.getTitle());
-                    for(String ingredient: recipe.getIngredients()){
-                        Log.d(TAG, "onChanged: " + ingredient);
+                    if(recipe.getRecipe_id().equals(mRecipeViewModel.getRecipeId())){
+
                     }
                 }
             }
@@ -64,13 +69,6 @@ public class RecipeActivity extends BaseActivity {
     }
 
 }
-
-
-
-
-
-
-
 
 
 
