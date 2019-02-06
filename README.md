@@ -7,7 +7,7 @@
 In this course you'll learn how to interact with a REST API from <a href="Food2Fork.com" target="_blank" rel="nofollow">Food2Fork.com</a>. The app will retrieve information from the website and display it in various view types. 
 <br><br>
 <strong>Here's the specifics of what you will see in the course:</strong>
-<br>
+<br><br>
 <ol>
 <li>Communicating with a webservice (rest api) using <strong>Retrofit2</strong></li>
 <li><strong>MVVM Architecture</strong>: ViewModel, Repository, Client structure</li>
