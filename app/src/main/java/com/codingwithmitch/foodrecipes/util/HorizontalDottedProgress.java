@@ -11,9 +11,6 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 
-import com.codingwithmitch.foodrecipes.R;
-
-
 public class HorizontalDottedProgress extends View {
 
     //actual dot radius
@@ -48,7 +45,7 @@ public class HorizontalDottedProgress extends View {
         Paint paint = new Paint();
 
         //set the color for the dot that you want to draw
-        paint.setColor(getResources().getColor(R.color.colorAccent));
+        paint.setColor(Color.parseColor("#fd583f"));
 
         //function to create dot
         createDot(canvas,paint);

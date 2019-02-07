@@ -3,42 +3,29 @@ package com.codingwithmitch.foodrecipes.viewmodels;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 import android.util.Log;
-
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 import java.util.List;
 
-public class RecipeListViewModel extends AndroidViewModel
-{
-
-    private static final String TAG = "RecipeListViewModel";
+public class RecipeListViewModel extends AndroidViewModel {
 
     private RecipeRepository mRecipeRepository;
-
     private boolean mIsViewingRecipes;
-
-    private MutableLiveData<Boolean> mIsQueryExhausted;
-    private MutableLiveData<Boolean> mIsPerformingQuery;
+    private boolean mIsPerformingQuery;
 
     public RecipeListViewModel(@NonNull Application application) {
         super(application);
-        mIsViewingRecipes = false;
         mRecipeRepository = RecipeRepository.getInstance(application);
-
-        mIsQueryExhausted = new MutableLiveData<>();
-        mIsQueryExhausted.setValue(false);
-        mIsPerformingQuery = new MutableLiveData<>();
-        mIsPerformingQuery.setValue(false);
+        mIsPerformingQuery = false;
     }
 
-
-    public LiveData<List<Recipe>> getRecipes() {
+    public LiveData<List<Recipe>> getRecipes(){
         return mRecipeRepository.getRecipes();
     }
 
@@ -46,33 +33,41 @@ public class RecipeListViewModel extends AndroidViewModel
         return mRecipeRepository.isQueryExhausted();
     }
 
-    public LiveData<Boolean> isPerformingQuery(){
-        return mRecipeRepository.isPerformingQuery();
-    }
-
-    public boolean isViewingRecipes() {
-        return mIsViewingRecipes;
-    }
-
-    public void search(String query, int pageNumber){
+    public void searchRecipesApi(String query, int pageNumber){
         mIsViewingRecipes = true;
-        mIsQueryExhausted.setValue(false);
-
+        mIsPerformingQuery = true;
         mRecipeRepository.searchRecipesApi(query, pageNumber);
     }
 
     public void searchNextPage(){
-        Log.d(TAG, "searchNextPage: called.");
-        if(!isPerformingQuery().getValue()
+        if(!mIsPerformingQuery
                 && mIsViewingRecipes
                 && !isQueryExhausted().getValue()){
             mRecipeRepository.searchNextPage();
         }
     }
 
+    public boolean isViewingRecipes(){
+        return mIsViewingRecipes;
+    }
+
+    public void setIsViewingRecipes(boolean isViewingRecipes){
+        mIsViewingRecipes = isViewingRecipes;
+    }
+
+    public void setIsPerformingQuery(Boolean isPerformingQuery){
+        mIsPerformingQuery = isPerformingQuery;
+    }
+
+    public boolean isPerformingQuery(){
+        return mIsPerformingQuery;
+    }
+
     public boolean onBackPressed(){
-        if(mIsPerformingQuery.getValue()){
+        if(mIsPerformingQuery){
+            // cancel the query
             mRecipeRepository.cancelRequest();
+            mIsPerformingQuery = false;
         }
         if(mIsViewingRecipes){
             mIsViewingRecipes = false;
@@ -80,15 +75,7 @@ public class RecipeListViewModel extends AndroidViewModel
         }
         return true;
     }
-
-    public void setIsViewingRecipes(boolean isViewingRecipes){
-        mIsViewingRecipes = isViewingRecipes;
-    }
 }
-
-
-
-
 
 
 

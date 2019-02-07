@@ -5,9 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RecipeListActivity"
-    android:background="#f2f2f2"
-    android:id="@+id/root_view">
+    tools:context=".RecipeListActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -16,15 +14,14 @@
         <android.support.v7.widget.Toolbar
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_scrollFlags="scroll|enterAlways"
-            android:id="@+id/toolbar">
+            android:id="@+id/toolbar"
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <android.support.v7.widget.SearchView
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:id="@+id/search_view"
-                app:queryHint="chicken..."
-                >
+                app:queryHint="chicken breast...">
 
             </android.support.v7.widget.SearchView>
 
@@ -41,3 +38,6 @@
     </android.support.v7.widget.RecyclerView>
 
 </android.support.design.widget.CoordinatorLayout>
+
+
+

@@ -5,7 +5,6 @@ import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 
-
 import com.codingwithmitch.foodrecipes.models.Recipe;
 
 import java.util.List;

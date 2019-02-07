@@ -6,22 +6,24 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class AppExecutors {
 
-    static AppExecutors instance = new AppExecutors();
+    private static AppExecutors instance;
+
+    public static AppExecutors getInstance(){
+        if(instance == null){
+            instance = new AppExecutors();
+        }
+        return instance;
+    }
 
     private final Executor mDiskIO = Executors.newSingleThreadExecutor();
 
     private final ScheduledExecutorService mNetworkIO = Executors.newScheduledThreadPool(3);
 
-    public Executor diskIO() {
-        return mDiskIO;
-    }
-
-    public ScheduledExecutorService networkIO() {
+    public ScheduledExecutorService networkIO(){
         return mNetworkIO;
     }
 
-
-    public static AppExecutors get(){
-        return instance;
+    public Executor diskIO() {
+        return mDiskIO;
     }
 }

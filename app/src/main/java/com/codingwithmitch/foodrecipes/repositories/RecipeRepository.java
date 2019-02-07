@@ -16,23 +16,16 @@ import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
 
 import java.util.List;
 
-
-
 public class RecipeRepository {
 
-    private static final String TAG = "RecipeRepository";
-
     private static RecipeRepository instance;
-    private RecipeDao mRecipeDao;
     private RecipeApiClient mRecipeApiClient;
     private RecipeCacheClient mRecipeCacheClient;
-
-    // RecipeListActivity
-    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
-    private MutableLiveData<Boolean> misPerformingQuery = new MutableLiveData<>();
-    private MediatorLiveData<List<Recipe>> mRecipes;
+    private RecipeDao mRecipeDao;
     private String mQuery;
     private int mPageNumber;
+    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
+    private MediatorLiveData<List<Recipe>> mRecipes = new MediatorLiveData<>();
 
     public static RecipeRepository getInstance(Context context){
         if(instance == null){
@@ -41,14 +34,10 @@ public class RecipeRepository {
         return instance;
     }
 
-    private RecipeRepository(Context context) {
+    private RecipeRepository(Context context){
         mRecipeDao = RecipeDatabase.getInstance(context).getRecipeDao();
         mRecipeApiClient = RecipeApiClient.getInstance();
         mRecipeCacheClient = RecipeCacheClient.getInstance();
-
-        // prepare the mediator
-        mRecipes = new MediatorLiveData<>();
-
         initMediators();
     }
 
@@ -58,10 +47,13 @@ public class RecipeRepository {
         mRecipes.addSource(recipeListApiSource, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                if (recipes != null) {
+                if(recipes != null){
                     mRecipes.setValue(recipes);
                     doneQuery(recipes);
-                } else {
+                }
+                else{
+                    // search database cache
+//                    doneQuery(null);
                     searchLocalCache(mQuery, mPageNumber);
                 }
             }
@@ -78,67 +70,62 @@ public class RecipeRepository {
                 doneQuery(recipes); // can't be null from cache. It will return empty list
             }
         });
+    }
 
+    private void doneQuery(List<Recipe> list){
+        if(list != null){
+            if (list.size() % 30 != 0) {
+                mIsQueryExhausted.setValue(true);
+            }
+        }
+        else{
+            mIsQueryExhausted.setValue(true);
+        }
+    }
 
+    public LiveData<Boolean> isQueryExhausted(){
+        return mIsQueryExhausted;
     }
 
     public LiveData<List<Recipe>> getRecipes(){
         return mRecipes;
     }
 
-    public LiveData<Boolean> isQueryExhausted() {
-        return mIsQueryExhausted;
+    // Room db is SINGLE SOURCE OF TRUTH for single Recipe
+    public LiveData<Recipe> getRecipe(final String recipeId){
+        mRecipeApiClient.searchRecipeById(recipeId, mRecipeDao); // Refresh the recipe in room db
+        return mRecipeDao.getRecipe(recipeId); // show the recipe from room db
     }
 
-    public LiveData<Boolean> isPerformingQuery() {
-        return misPerformingQuery;
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeApiClient.isRecipeRequestTimedOut();
+    }
+
+
+    public void searchRecipesApi(String query, int pageNumber){
+        if(pageNumber == 0){
+            pageNumber = 1;
+        }
+        mQuery = query;
+        mPageNumber = pageNumber;
+        mIsQueryExhausted.setValue(false);
+        mRecipeApiClient.searchRecipesApi(query, pageNumber);
     }
 
     public void searchNextPage(){
         searchRecipesApi(mQuery, mPageNumber + 1);
     }
 
-    public void searchRecipesApi(String query, int pageNumber){
-        mQuery = query;
-        if(pageNumber == 0){
-            pageNumber = 1;
-        }
-        mPageNumber = pageNumber;
-        mIsQueryExhausted.setValue(false);
-        misPerformingQuery.setValue(true);
-        mRecipeApiClient.searchRecipesApi(query, pageNumber);
-    }
-
-    private void searchLocalCache(final String query, final int pageNumber){
-        Log.d(TAG, "searchLocalCache: searching local cache.");
-        mRecipeCacheClient.searchLocalCache(mRecipeDao, query, pageNumber);
-    }
-
-    private void doneQuery(List<Recipe> list){
-        misPerformingQuery.setValue(false);
-        if(list.size() < 30 ){
-            mIsQueryExhausted.setValue(true);
-        }
-    }
-
-    public LiveData<Recipe> getRecipe(final String recipeId){
-        mRecipeApiClient.refreshRecipe(recipeId, mRecipeDao);
-        return mRecipeDao.getRecipe(recipeId);
-    }
-
-    public LiveData<Boolean> hasNetworkTimedOut(){
-        return mRecipeApiClient.hasNetworkTimedOut();
-    }
-
-    public void cancelRequest() {
+    public void cancelRequest(){
         mRecipeApiClient.cancelRequest();
     }
+
+
+
+    private void searchLocalCache(final String query, final int pageNumber){
+        mRecipeCacheClient.searchLocalCache(mRecipeDao, query, pageNumber);
+    }
 }
-
-
-
-
-
 
 
 

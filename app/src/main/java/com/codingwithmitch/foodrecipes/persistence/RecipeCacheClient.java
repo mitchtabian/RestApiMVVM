@@ -29,7 +29,7 @@ public class RecipeCacheClient {
     }
 
     public void searchLocalCache(final RecipeDao recipeDao, final String query, final int pageNumber){
-        AppExecutors.get().diskIO().execute(new Runnable() {
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
                 List<Recipe> list = new ArrayList<>();
