@@ -12,6 +12,11 @@ import android.support.annotation.WorkerThread;
 import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.requests.responses.ApiResponse;
 
+import java.io.IOException;
+
+import retrofit2.Call;
+import retrofit2.Response;
+
 
 // ResultType: Type for the Resource data.
 // RequestType: Type for the API response.
@@ -59,9 +64,9 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
     }
 
     private void fetchFromNetwork(final LiveData<ResultType> dbSource){
-        final LiveData<ApiResponse<RequestType>> apiResponse = createCall();
+//        final LiveData<ApiResponse<RequestType>> apiResponse = createCall();
 
-        // Update LiveData for loading status
+        // Show data from cache (if there is any) & let user know it's loading
         result.addSource(dbSource, new Observer<ResultType>() {
             @Override
             public void onChanged(@Nullable ResultType resultType) {
@@ -69,72 +74,162 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
             }
         });
 
+        final Call<ApiResponse<RequestType>> apiResponse = createCall();
 
-        result.addSource(apiResponse, new Observer<ApiResponse<RequestType>>() {
+        appExecutors.networkIO().submit(new Runnable() {
             @Override
-            public void onChanged(@Nullable final ApiResponse<RequestType> requestTypeApiResponse) {
-                result.removeSource(dbSource);
-                result.removeSource(apiResponse);
+            public void run() {
+                try {
 
+                    final Response<ApiResponse<RequestType>> response = apiResponse.execute();
 
-                /*
+                    // If the call doesn't return null. remove the db source
+                    if(response != null){
+                        result.removeSource(dbSource);
+                    }
+
+                    /*
                     3 Cases:
                     1) ApiSuccessResponse
                     2) ApiErrorResponse
                     3) ApiEmptyResponse
                  */
-                if(requestTypeApiResponse instanceof ApiResponse.ApiSuccessResponse){
-                    appExecutors.diskIO().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            saveCallResult((RequestType) processResponse((ApiResponse.ApiSuccessResponse) requestTypeApiResponse));
+                    if(response.body() instanceof ApiResponse.ApiSuccessResponse){
+                        appExecutors.diskIO().execute(new Runnable() {
+                            @Override
+                            public void run() {
 
-                            appExecutors.mainThread().execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // we specially request a new live data,
-                                    // otherwise we will get immediately last cached value,
-                                    // which may not be updated with latest results received from network.
-                                    result.addSource(loadFromDb(), new Observer<ResultType>() {
-                                        @Override
-                                        public void onChanged(@Nullable ResultType resultType) {
-                                            setValue(Resource.success(resultType));
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-                else if(requestTypeApiResponse instanceof ApiResponse.ApiEmptyResponse){
-                    appExecutors.mainThread().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            result.addSource(loadFromDb(), new Observer<ResultType>() {
-                                @Override
-                                public void onChanged(@Nullable ResultType resultType) {
-                                    setValue(Resource.success(resultType));
-                                }
-                            });
-                        }
-                    });
-                }
-                else if(requestTypeApiResponse instanceof ApiResponse.ApiErrorResponse){
-                    onFetchFailed();
-                    result.addSource(dbSource, new Observer<ResultType>() {
-                        @Override
-                        public void onChanged(@Nullable ResultType resultType) {
-                            setValue(
-                                    Resource.error(
-                                            ((ApiResponse.ApiErrorResponse)requestTypeApiResponse).getErrorMessage(),
-                                            resultType
-                                            )
-                            );
-                        }
-                    });
+                                // save response to local db
+                                saveCallResult((RequestType) processResponse((ApiResponse.ApiSuccessResponse) response.body()));
+
+
+                                // observe local db again since new result from network will have been saved
+                                appExecutors.mainThread().execute(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // we specially request a new live data,
+                                        // otherwise we will get immediately last cached value,
+                                        // which may not be updated with latest results received from network.
+                                        // as opposed to use the @dbSource variable passed as input
+                                        result.addSource(loadFromDb(), new Observer<ResultType>() {
+                                            @Override
+                                            public void onChanged(@Nullable ResultType resultType) {
+                                                setValue(Resource.success(resultType));
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    else if(response.body() instanceof ApiResponse.ApiEmptyResponse){ // empty result
+                        appExecutors.mainThread().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                result.addSource(loadFromDb(), new Observer<ResultType>() {
+                                    @Override
+                                    public void onChanged(@Nullable ResultType resultType) {
+                                        setValue(Resource.success(resultType));
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    else if(response.body() instanceof ApiResponse.ApiErrorResponse){ // error result
+                        onFetchFailed();
+                        result.addSource(dbSource, new Observer<ResultType>() {
+                            @Override
+                            public void onChanged(@Nullable ResultType resultType) {
+                                setValue(
+                                        Resource.error(
+                                                ((ApiResponse.ApiErrorResponse)response.body()).getErrorMessage(),
+                                                resultType
+                                        )
+                                );
+                            }
+                        });
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
+
+        // Show data from cache (if there is any) & let user know it's loading
+//        result.addSource(dbSource, new Observer<ResultType>() {
+//            @Override
+//            public void onChanged(@Nullable ResultType resultType) {
+//                setValue(Resource.loading(resultType));
+//            }
+//        });
+
+
+//        result.addSource(apiResponse, new Observer<ApiResponse<RequestType>>() {
+//            @Override
+//            public void onChanged(@Nullable final ApiResponse<RequestType> requestTypeApiResponse) {
+//                result.removeSource(dbSource);
+//                result.removeSource(apiResponse);
+//
+//
+//                /*
+//                    3 Cases:
+//                    1) ApiSuccessResponse
+//                    2) ApiErrorResponse
+//                    3) ApiEmptyResponse
+//                 */
+//                if(requestTypeApiResponse instanceof ApiResponse.ApiSuccessResponse){
+//                    appExecutors.diskIO().execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            saveCallResult((RequestType) processResponse((ApiResponse.ApiSuccessResponse) requestTypeApiResponse));
+//
+//                            appExecutors.mainThread().execute(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    // we specially request a new live data,
+//                                    // otherwise we will get immediately last cached value,
+//                                    // which may not be updated with latest results received from network.
+//                                    result.addSource(loadFromDb(), new Observer<ResultType>() {
+//                                        @Override
+//                                        public void onChanged(@Nullable ResultType resultType) {
+//                                            setValue(Resource.success(resultType));
+//                                        }
+//                                    });
+//                                }
+//                            });
+//                        }
+//                    });
+//                }
+//                else if(requestTypeApiResponse instanceof ApiResponse.ApiEmptyResponse){
+//                    appExecutors.mainThread().execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            result.addSource(loadFromDb(), new Observer<ResultType>() {
+//                                @Override
+//                                public void onChanged(@Nullable ResultType resultType) {
+//                                    setValue(Resource.success(resultType));
+//                                }
+//                            });
+//                        }
+//                    });
+//                }
+//                else if(requestTypeApiResponse instanceof ApiResponse.ApiErrorResponse){
+//                    onFetchFailed();
+//                    result.addSource(dbSource, new Observer<ResultType>() {
+//                        @Override
+//                        public void onChanged(@Nullable ResultType resultType) {
+//                            setValue(
+//                                    Resource.error(
+//                                            ((ApiResponse.ApiErrorResponse)requestTypeApiResponse).getErrorMessage(),
+//                                            resultType
+//                                            )
+//                            );
+//                        }
+//                    });
+//                }
+//            }
+//        });
     }
 
     /**
@@ -142,7 +237,6 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
      * Must be done on MainThread
      * @param newValue
      */
-    @MainThread
     private void setValue(Resource<ResultType> newValue) {
         if (result.getValue() != newValue) {
             result.setValue(newValue);
@@ -154,27 +248,25 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
     }
 
     // Called to save the result of the API response into the database.
-    @WorkerThread
     abstract void saveCallResult(@NonNull RequestType item);
 
     // Called with the data in the database to decide whether to fetch
     // potentially updated data from the network.
-    @MainThread
     abstract boolean shouldFetch(@Nullable ResultType data);
 
 
     // Called to get the cached data from the database.
-    @NonNull @MainThread
+    @NonNull
     abstract LiveData<ResultType> loadFromDb();
 
 
     // Called to create the API call.
-    @NonNull @MainThread
-    abstract LiveData<ApiResponse<RequestType>> createCall();
+    @NonNull
+    abstract Call<ApiResponse<RequestType>> createCall();
 
     // Called when the fetch fails. The child class may want to reset components
     // like rate limiter.
-    @MainThread
+
     protected abstract void onFetchFailed();
 
     // Returns a LiveData object that represents the resource that's implemented

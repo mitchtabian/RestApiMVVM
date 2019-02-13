@@ -68,20 +68,53 @@ public class RecipeApiClient {
         return mRecipeRequestTimeout;
     }
 
-    public void searchRecipesApi(String query, int pageNumber){
-        if(mRetrieveRecipesRunnable != null){
-            mRetrieveRecipesRunnable = null;
-        }
-        mRetrieveRecipesRunnable = new RetrieveRecipesRunnable(query, pageNumber);
-        final Future handler = AppExecutors.getInstance().networkIO().submit(mRetrieveRecipesRunnable);
+//    public void searchRecipesApi(String query, int pageNumber){
+//        if(mRetrieveRecipesRunnable != null){
+//            mRetrieveRecipesRunnable = null;
+//        }
+//        mRetrieveRecipesRunnable = new RetrieveRecipesRunnable(query, pageNumber);
+//        final Future handler = AppExecutors.getInstance().networkIO().submit(mRetrieveRecipesRunnable);
+//
+////        AppExecutors.getInstance().networkIO().schedule(new Runnable() {
+////            @Override
+////            public void run() {
+////                // let the user know its timed out
+////                handler.cancel(true);
+////            }
+////        }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
+//    }
 
-//        AppExecutors.getInstance().networkIO().schedule(new Runnable() {
-//            @Override
-//            public void run() {
-//                // let the user know its timed out
-//                handler.cancel(true);
-//            }
-//        }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
+
+    public LiveData<Resource<List<Recipe>>> searchRecipesApi(String query, int pageNumber){
+        return new NetworkBoundResource<List<Recipe>, RecipeSearchResponse>(AppExecutors.getInstance()){
+
+            @Override
+            void saveCallResult(@NonNull RecipeSearchResponse item) {
+
+            }
+
+            @Override
+            boolean shouldFetch(@Nullable List<Recipe> data) {
+                return false;
+            }
+
+            @NonNull
+            @Override
+            LiveData<List<Recipe>> loadFromDb() {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            Call<ApiResponse<RecipeSearchResponse>> createCall() {
+                return null;
+            }
+
+            @Override
+            protected void onFetchFailed() {
+
+            }
+        }.getAsLiveData();
     }
 
 
@@ -106,13 +139,22 @@ public class RecipeApiClient {
                 return dao.getRecipe(recipeId);
             }
 
+//            @NonNull
+//            @Override
+//            LiveData<ApiResponse<RecipeResponse>> createCall() {
+//               return ServiceGenerator.getRecipeApi().getRecipe(
+//                       Constants.API_KEY,
+//                       recipeId
+//               );
+//            }
+
             @NonNull
             @Override
-            LiveData<ApiResponse<RecipeResponse>> createCall() {
-               return ServiceGenerator.getRecipeApi().getRecipe(
-                       Constants.API_KEY,
-                       recipeId
-               );
+            Call<ApiResponse<RecipeResponse>> createCall() {
+                return ServiceGenerator.getRecipeApi().getRecipe(
+                        Constants.API_KEY,
+                        recipeId
+                );
             }
 
             @Override
