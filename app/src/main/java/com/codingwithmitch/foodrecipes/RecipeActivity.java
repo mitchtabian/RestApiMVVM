@@ -43,6 +43,7 @@ public class RecipeActivity extends BaseActivity {
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
         showProgressBar(true);
+        subscribeObservers();
         getIncomingIntent();
     }
 
@@ -50,12 +51,12 @@ public class RecipeActivity extends BaseActivity {
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
             Log.d(TAG, "getIncomingIntent: " + recipe.getTitle());
-            subscribeObservers(recipe.getRecipe_id());
+            mRecipeViewModel.searchRecipeById(recipe.getRecipe_id());
         }
     }
 
-    private void subscribeObservers(String recipeId){
-        mRecipeViewModel.getRecipe(recipeId).observe(this, new Observer<Recipe>() {
+    private void subscribeObservers(){
+        mRecipeViewModel.getRecipe().observe(this, new Observer<Recipe>() {
             @Override
             public void onChanged(@Nullable Recipe recipe) {
                 if(recipe != null){

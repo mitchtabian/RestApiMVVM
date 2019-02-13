@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.persistence.RecipeDao;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
@@ -73,11 +72,11 @@ public class RecipeApiClient {
         }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    public void searchRecipeById(final String recipeId, final RecipeDao dao){
+    public void searchRecipeById(String recipeId){
         if(mRetrieveRecipeRunnable != null){
             mRetrieveRecipeRunnable = null;
         }
-        mRetrieveRecipeRunnable = new RetrieveRecipeRunnable(recipeId, dao);
+        mRetrieveRecipeRunnable = new RetrieveRecipeRunnable(recipeId);
 
         final Future handler = AppExecutors.getInstance().networkIO().submit(mRetrieveRecipeRunnable);
 
@@ -91,52 +90,6 @@ public class RecipeApiClient {
             }
         }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
 
-    }
-
-    private class RetrieveRecipeRunnable implements Runnable{
-
-        private String recipeId;
-        private RecipeDao recipeDao;
-        boolean cancelRequest;
-
-        public RetrieveRecipeRunnable(String recipeId, RecipeDao recipeDao) {
-            this.recipeId = recipeId;
-            this.recipeDao = recipeDao;
-            cancelRequest = false;
-        }
-
-        @Override
-        public void run() {
-            try {
-                Response response = getRecipe(recipeId).execute();
-                if(cancelRequest){
-                    return;
-                }
-                if(response.code() == 200){
-                    Recipe recipe = ((RecipeResponse)response.body()).getRecipe();
-                    recipeDao.insertRecipes(recipe);
-                }
-                else{
-                    String error = response.errorBody().string();
-                    Log.e(TAG, "run: " + error );
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        private Call<RecipeResponse> getRecipe(String recipeId){
-            return ServiceGenerator.getRecipeApi().getRecipe(
-                    Constants.API_KEY,
-                    recipeId
-            );
-        }
-
-        private void cancelRequest(){
-            Log.d(TAG, "cancelRequest: canceling the search request.");
-            cancelRequest = true;
-        }
     }
 
     private class RetrieveRecipesRunnable implements Runnable{
@@ -195,7 +148,51 @@ public class RecipeApiClient {
         }
     }
 
+    private class RetrieveRecipeRunnable implements Runnable{
 
+        private String recipeId;
+        boolean cancelRequest;
+
+        public RetrieveRecipeRunnable(String recipeId) {
+            this.recipeId = recipeId;
+            cancelRequest = false;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Response response = getRecipe(recipeId).execute();
+                if(cancelRequest){
+                    return;
+                }
+                if(response.code() == 200){
+                    Recipe recipe = ((RecipeResponse)response.body()).getRecipe();
+                    mRecipe.postValue(recipe);
+                }
+                else{
+                    String error = response.errorBody().string();
+                    Log.e(TAG, "run: " + error );
+                    mRecipe.postValue(null);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                mRecipe.postValue(null);
+            }
+
+        }
+
+        private Call<RecipeResponse> getRecipe(String recipeId){
+            return ServiceGenerator.getRecipeApi().getRecipe(
+                    Constants.API_KEY,
+                    recipeId
+            );
+        }
+
+        private void cancelRequest(){
+            Log.d(TAG, "cancelRequest: canceling the search request.");
+            cancelRequest = true;
+        }
+    }
 
     public void cancelRequest(){
         if(mRetrieveRecipesRunnable != null){

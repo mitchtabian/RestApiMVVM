@@ -1,33 +1,33 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
-import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.ViewModel;
-import android.support.annotation.NonNull;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
-public class RecipeViewModel extends AndroidViewModel {
+public class RecipeViewModel extends ViewModel {
 
     private RecipeRepository mRecipeRepository;
     private String mRecipeId;
     private boolean mDidRetrieveRecipe;
 
-    public RecipeViewModel(@NonNull Application application) {
-        super(application);
-        mRecipeRepository = RecipeRepository.getInstance(application);
+    public RecipeViewModel() {
+        mRecipeRepository = RecipeRepository.getInstance();
         mDidRetrieveRecipe = false;
     }
 
-    public LiveData<Recipe> getRecipe(String recipeId){
-        mRecipeId = recipeId;
-        return mRecipeRepository.getRecipe(recipeId);
+    public LiveData<Recipe> getRecipe(){
+        return mRecipeRepository.getRecipe();
     }
 
     public LiveData<Boolean> isRecipeRequestTimedOut(){
         return mRecipeRepository.isRecipeRequestTimedOut();
+    }
+
+    public void searchRecipeById(String recipeId){
+        mRecipeId = recipeId;
+        mRecipeRepository.searchRecipeById(recipeId);
     }
 
     public String getRecipeId() {
