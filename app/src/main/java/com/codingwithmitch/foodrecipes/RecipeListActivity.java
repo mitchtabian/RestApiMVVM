@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -60,12 +61,13 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
                 if(recipes != null){
-                    if(mRecipeListViewModel.isViewingRecipes()){
-                        Testing.printRecipes(recipes, "recipes test");
+                    if(mRecipeListViewModel.isViewingRecipes()) {
+//                        Testing.printRecipes(recipes, "recipes test");
                         mRecipeListViewModel.setIsPerformingQuery(false);
                         mAdapter.setRecipes(recipes);
                     }
                 }
+
             }
         });
 

@@ -1,7 +1,14 @@
 package com.codingwithmitch.foodrecipes.requests;
 
+
+import android.arch.lifecycle.LiveData;
+
+import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.requests.responses.ApiResponse;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -17,10 +24,35 @@ public interface RecipeApi {
             @Query("page") String page
     );
 
+//    // GET RECIPE REQUEST
+//    @GET("api/get")
+//    Call<RecipeResponse> getRecipe(
+//            @Query("key") String key,
+//            @Query("rId") String recipe_id
+//    );
+
     // GET RECIPE REQUEST
     @GET("api/get")
-    Call<RecipeResponse> getRecipe(
+    LiveData<ApiResponse<RecipeResponse>> getRecipe(
             @Query("key") String key,
             @Query("rId") String recipe_id
     );
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

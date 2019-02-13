@@ -3,6 +3,7 @@ package com.codingwithmitch.foodrecipes.adapters;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -100,25 +101,27 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     }
 
+    private static final String TAG = "adapter";
     @Override
     public int getItemViewType(int position) {
-        if(mRecipes.get(position).getSocial_rank() == -1){
-            return CATEGORY_TYPE;
+        if(mRecipes != null){
+            if(mRecipes.get(position).getSocial_rank() == -1){
+                return CATEGORY_TYPE;
+            }
+            else if(mRecipes.get(position).getTitle().equals("LOADING...")){
+                return LOADING_TYPE;
+            }
+            else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
+                return EXHAUSTED_TYPE;
+            }
+            else if(position == mRecipes.size() - 1
+                    && position != 0
+                    && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
+                return LOADING_TYPE;
+            }
+
         }
-        else if(mRecipes.get(position).getTitle().equals("LOADING...")){
-            return LOADING_TYPE;
-        }
-        else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
-            return EXHAUSTED_TYPE;
-        }
-        else if(position == mRecipes.size() - 1
-                && position != 0
-                && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
-            return LOADING_TYPE;
-        }
-        else{
-            return RECIPE_TYPE;
-        }
+        return RECIPE_TYPE;
     }
 
     public void setQueryExhausted(){

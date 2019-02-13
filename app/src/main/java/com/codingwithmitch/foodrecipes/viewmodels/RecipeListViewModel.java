@@ -1,8 +1,11 @@
 package com.codingwithmitch.foodrecipes.viewmodels;
 
+import android.app.Application;
+import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
@@ -10,14 +13,15 @@ import com.codingwithmitch.foodrecipes.repositories.RecipeRepository;
 
 import java.util.List;
 
-public class RecipeListViewModel extends ViewModel {
+public class RecipeListViewModel extends AndroidViewModel {
 
     private RecipeRepository mRecipeRepository;
     private boolean mIsViewingRecipes;
     private boolean mIsPerformingQuery;
 
-    public RecipeListViewModel() {
-        mRecipeRepository = RecipeRepository.getInstance();
+    public RecipeListViewModel(@NonNull Application application) {
+        super(application);
+        mRecipeRepository = RecipeRepository.getInstance(application);
         mIsPerformingQuery = false;
     }
 

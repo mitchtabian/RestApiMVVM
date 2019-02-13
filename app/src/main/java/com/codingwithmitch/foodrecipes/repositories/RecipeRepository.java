@@ -4,56 +4,78 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
+import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.persistence.RecipeCacheClient;
+import com.codingwithmitch.foodrecipes.persistence.RecipeDao;
+import com.codingwithmitch.foodrecipes.persistence.RecipeDatabase;
 import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
+import com.codingwithmitch.foodrecipes.requests.Resource;
 
 import java.util.List;
 
 public class RecipeRepository {
 
+    private static final String TAG = "RecipeRepository";
+
     private static RecipeRepository instance;
     private RecipeApiClient mRecipeApiClient;
+    private RecipeCacheClient mRecipeCacheClient;
+    private RecipeDao mRecipeDao;
     private String mQuery;
     private int mPageNumber;
     private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
     private MediatorLiveData<List<Recipe>> mRecipes = new MediatorLiveData<>();
 
-    public static RecipeRepository getInstance(){
+    public static RecipeRepository getInstance(Context context){
         if(instance == null){
-            instance = new RecipeRepository();
+            instance = new RecipeRepository(context);
         }
         return instance;
     }
 
-    private RecipeRepository(){
+    private RecipeRepository(Context context){
+        mRecipeDao = RecipeDatabase.getInstance(context).getRecipeDao();
         mRecipeApiClient = RecipeApiClient.getInstance();
+        mRecipeCacheClient = RecipeCacheClient.getInstance();
         initMediators();
     }
 
     private void initMediators(){
-        LiveData<List<Recipe>> recipeListApiSource = mRecipeApiClient.getRecipes();
+        // add source for the recipe list API query in RecipeListActivity
+        final LiveData<List<Recipe>> recipeListApiSource = mRecipeApiClient.getRecipes();
         mRecipes.addSource(recipeListApiSource, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-
+                //mRecipes.removeSource(recipeListApiSource); // **** Do I need this? ****
                 if(recipes != null){
                     mRecipes.setValue(recipes);
                     doneQuery(recipes);
                 }
                 else{
                     // search database cache
-                    doneQuery(null);
+                    searchLocalCache(mQuery, mPageNumber);
                 }
+            }
+        });
+
+        // add source for the recipe list CACHE query in RecipeListActivity
+        LiveData<List<Recipe>> recipeListCacheSource = mRecipeCacheClient.getRecipes();
+        mRecipes.addSource(recipeListCacheSource, new Observer<List<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable List<Recipe> recipes) {
+                mRecipes.setValue(recipes);
+                doneQuery(recipes); // can't be null from cache. It will return empty list
             }
         });
     }
 
     private void doneQuery(List<Recipe> list){
         if(list != null){
-            if (list.size() % 30 != 0) {
+            if (list.size() % 30 != 0 || list.size() == 0) {
                 mIsQueryExhausted.setValue(true);
             }
         }
@@ -70,12 +92,19 @@ public class RecipeRepository {
         return mRecipes;
     }
 
-    public LiveData<Recipe> getRecipe(){
-        return mRecipeApiClient.getRecipe();
+//    // Room db is SINGLE SOURCE OF TRUTH for single Recipe
+//    public LiveData<Recipe> getRecipe(final String recipeId){
+//        return mRecipeApiClient.searchRecipeById(recipeId, mRecipeDao); // Refresh the recipe in room db
+//        return mRecipeDao.getRecipe(recipeId); // show the recipe from room db
+//    }
+
+    // Room db is SINGLE SOURCE OF TRUTH for single Recipe
+    public LiveData<Resource<Recipe>> getRecipe(final String recipeId){
+        return mRecipeApiClient.searchRecipeById(recipeId, mRecipeDao); // Refresh the recipe in room db
     }
 
-    public void searchRecipeById(String recipeId){
-        mRecipeApiClient.searchRecipeById(recipeId);
+    public LiveData<Boolean> isRecipeRequestTimedOut(){
+        return mRecipeApiClient.isRecipeRequestTimedOut();
     }
 
 
@@ -97,10 +126,19 @@ public class RecipeRepository {
         mRecipeApiClient.cancelRequest();
     }
 
-    public LiveData<Boolean> isRecipeRequestTimedOut(){
-        return mRecipeApiClient.isRecipeRequestTimedOut();
+
+
+    private void searchLocalCache(final String query, final int pageNumber){
+        mRecipeCacheClient.searchLocalCache(mRecipeDao, query, pageNumber);
     }
 }
+
+
+
+
+
+
+
 
 
 
