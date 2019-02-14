@@ -2,6 +2,8 @@ package com.codingwithmitch.foodrecipes;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.arch.paging.DataSource;
+import android.arch.paging.PagedList;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,18 +15,17 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 
 import com.codingwithmitch.foodrecipes.adapters.OnRecipeListener;
-import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
+import com.codingwithmitch.foodrecipes.adapters.RecipePagingAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.codingwithmitch.foodrecipes.util.Resource;
-import com.codingwithmitch.foodrecipes.util.Testing;
 import com.codingwithmitch.foodrecipes.util.VerticalSpacingItemDecorator;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeListViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -34,7 +35,7 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
 
     private RecipeListViewModel mRecipeListViewModel;
     private RecyclerView mRecyclerView;
-    private RecipeRecyclerAdapter mAdapter;
+    private RecipePagingAdapter mAdapter;
     private SearchView mSearchView;
 
     @Override
@@ -53,36 +54,36 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
     }
 
     private void subscribeObservers(){
-        mRecipeListViewModel.getRecipes().observe(this, new Observer<Resource<List<Recipe>>>() {
-            @Override
-            public void onChanged(@Nullable Resource<List<Recipe>> listResource) {
-
-                if(listResource != null){
-                    Log.d(TAG, "onChanged: status: " + listResource.status);
-//                    Log.d(TAG, "onChanged: message: " + listResource.message);
-
-                    if(listResource.data != null) {
-                        switch (listResource.status) {
-                            case LOADING: {
-                                Log.d(TAG, "onChanged: showing " + listResource.data.size() + " recipes from cache.");
-                                mAdapter.setRecipes(listResource.data);
-                                break;
-                            }
-                            case SUCCESS: {
-                                mAdapter.hideLoading();
-                                Log.d(TAG, "onChanged: cache has been refreshed.");
-                                mAdapter.setRecipes(listResource.data);
-                                break;
-                            }
-                            case ERROR: {
-                                Toast.makeText(RecipeListActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+//        mRecipeListViewModel.getRecipes().observe(this, new Observer<Resource<List<Recipe>>>() {
+//            @Override
+//            public void onChanged(@Nullable Resource<List<Recipe>> listResource) {
+//
+//                if(listResource != null){
+//                    Log.d(TAG, "onChanged: status: " + listResource.status);
+////                    Log.d(TAG, "onChanged: message: " + listResource.message);
+//
+//                    if(listResource.data != null) {
+//                        switch (listResource.status) {
+//                            case LOADING: {
+////                                Log.d(TAG, "onChanged: showing " + listResource.data.size() + " recipes from cache.");
+////                                mAdapter.setRecipes(listResource.data);
+//                                break;
+//                            }
+//                            case SUCCESS: {
+////                                mAdapter.hideLoading();
+////                                Log.d(TAG, "onChanged: cache has been refreshed.");
+////                                mAdapter.setRecipes(listResource.data);
+//                                break;
+//                            }
+//                            case ERROR: {
+//                                Toast.makeText(RecipeListActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        });
 
         mRecipeListViewModel.getViewState().observe(this, new Observer<RecipeListViewModel.ViewState>() {
             @Override
@@ -109,18 +110,25 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             @Override
             public void onChanged(@Nullable Boolean aBoolean) {
                 if(aBoolean){
-                    mAdapter.setQueryExhausted();
+//                    mAdapter.setQueryExhausted();
                 }
             }
         });
     }
 
     private void initRecyclerView(){
-        mAdapter = new RecipeRecyclerAdapter(this);
+        mAdapter = new RecipePagingAdapter(this);
         VerticalSpacingItemDecorator itemDecorator = new VerticalSpacingItemDecorator(30);
         mRecyclerView.addItemDecoration(itemDecorator);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        mRecipeListViewModel.getRecipes().observe(this, new Observer<PagedList<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable PagedList<Recipe> recipes) {
+                mAdapter.submitList(recipes);
+            }
+        });
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -134,6 +142,7 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             }
         });
     }
+
 
     private void initSearchView(){
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -152,9 +161,9 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
 
     @Override
     public void onRecipeClick(int position) {
-        Intent intent = new Intent(this, RecipeActivity.class);
-        intent.putExtra("recipe", mAdapter.getSelectedRecipe(position));
-        startActivity(intent);
+//        Intent intent = new Intent(this, RecipeActivity.class);
+//        intent.putExtra("recipe", mAdapter.getSelectedRecipe(position));
+//        startActivity(intent);
     }
 
     @Override
@@ -163,12 +172,12 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
     }
 
     private void displaySearchCategories(){
-        mAdapter.displaySearchCategories();
+//        mAdapter.displaySearchCategories();
     }
 
     private void searchRecipeApi(String query){
-        mAdapter.displayLoading();
-        mRecyclerView.smoothScrollToPosition(0);
+//        mAdapter.displayLoading();
+//        mRecyclerView.smoothScrollToPosition(0);
         mRecipeListViewModel.searchRecipesApi(query, 1);
         mSearchView.clearFocus();
     }
