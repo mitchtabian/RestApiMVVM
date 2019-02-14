@@ -1,5 +1,7 @@
 package com.codingwithmitch.foodrecipes.persistence;
 
+
+
 import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
@@ -18,9 +20,11 @@ public interface RecipeDao {
     void insertRecipes(Recipe... recipes);
 
     // (pageNumber - 1) b/c the api starts at page 1. But local db starts at page 0
+//    @Query("SELECT * FROM recipes WHERE title LIKE '%' || :query || '%' OR " + " ingredients LIKE '%' || :query || '%'" +
+//            " ORDER BY social_rank DESC LIMIT 30 OFFSET ((:pageNumber - 1) * 30)")
     @Query("SELECT * FROM recipes WHERE title LIKE '%' || :query || '%' OR " + " ingredients LIKE '%' || :query || '%'" +
-            " ORDER BY social_rank DESC LIMIT 30 OFFSET ((:pageNumber - 1) * 30)")
-    List<Recipe> searchRecipes(String query, int pageNumber);
+            " ORDER BY social_rank DESC LIMIT (:pageNumber * 30)")
+    LiveData<List<Recipe>> searchRecipes(String query, int pageNumber);
 
     @Query("SELECT * FROM recipes")
     List<Recipe> getRecipes();

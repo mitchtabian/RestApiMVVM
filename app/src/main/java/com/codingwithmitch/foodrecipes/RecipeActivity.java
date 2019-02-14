@@ -15,7 +15,6 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.requests.Resource;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
 
 public class RecipeActivity extends BaseActivity {
@@ -43,7 +42,8 @@ public class RecipeActivity extends BaseActivity {
 
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
-//        showProgressBar(true);
+        showProgressBar(true);
+        subscribeObservers();
         getIncomingIntent();
     }
 
@@ -51,54 +51,12 @@ public class RecipeActivity extends BaseActivity {
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
             Log.d(TAG, "getIncomingIntent: " + recipe.getTitle());
-            subscribeObservers(recipe.getRecipe_id());
+
         }
     }
 
-    private void subscribeObservers(final String recipeId){
-//        mRecipeViewModel.getRecipe(recipeId).observe(this, new Observer<Recipe>() {
-//            @Override
-//            public void onChanged(@Nullable Recipe recipe) {
-//                if(recipe != null){
-//                    if(recipe.getRecipe_id().equals(mRecipeViewModel.getRecipeId())){
-//                        setRecipeProperties(recipe);
-//                        mRecipeViewModel.setRetrievedRecipe(true);
-//                    }
-//                }
-//            }
-//        });
+    private void subscribeObservers(){
 
-        mRecipeViewModel.getRecipe(recipeId).observe(this, new Observer<Resource<Recipe>>() {
-            @Override
-            public void onChanged(@Nullable Resource<Recipe> recipeResource) {
-                if(recipeResource != null){
-                    if(recipeResource.data != null){
-                        if(recipeResource.data.getRecipe_id().equals(mRecipeViewModel.getRecipeId())){
-                            setRecipeProperties(recipeResource.data);
-                            mRecipeViewModel.setRetrievedRecipe(true);
-                        }
-                    }
-
-                    if(recipeResource.status == Resource.Status.LOADING){
-                        showProgressBar(true);
-                    }
-
-                    if(recipeResource.status == Resource.Status.SUCCESS){
-                        showProgressBar(false);
-                    }
-                }
-            }
-        });
-
-        mRecipeViewModel.isRecipeRequestTimedOut().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(@Nullable Boolean aBoolean) {
-                if(aBoolean && !mRecipeViewModel.didRetrieveRecipe()){
-                    Log.d(TAG, "onChanged: timed out..");
-                    displayErrorScreen("Error retrieving data. Check network connection.");
-                }
-            }
-        });
     }
 
     private void displayErrorScreen(String errorMessage){
@@ -126,7 +84,7 @@ public class RecipeActivity extends BaseActivity {
                 .into(mRecipeImage);
 
         showParent();
-//        showProgressBar(false);
+        showProgressBar(false);
     }
 
     private void setRecipeProperties(Recipe recipe){

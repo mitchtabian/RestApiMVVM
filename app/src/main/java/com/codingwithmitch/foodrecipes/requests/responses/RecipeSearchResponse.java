@@ -1,5 +1,8 @@
 package com.codingwithmitch.foodrecipes.requests.responses;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.codingwithmitch.foodrecipes.models.Recipe;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -20,6 +23,7 @@ public class RecipeSearchResponse {
         return count;
     }
 
+    @Nullable
     public List<Recipe> getRecipes() {
         return recipes;
     }

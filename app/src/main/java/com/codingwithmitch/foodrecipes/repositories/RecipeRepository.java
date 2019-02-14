@@ -1,34 +1,32 @@
 package com.codingwithmitch.foodrecipes.repositories;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.codingwithmitch.foodrecipes.AppExecutors;
 import com.codingwithmitch.foodrecipes.models.Recipe;
-import com.codingwithmitch.foodrecipes.persistence.RecipeCacheClient;
 import com.codingwithmitch.foodrecipes.persistence.RecipeDao;
 import com.codingwithmitch.foodrecipes.persistence.RecipeDatabase;
-import com.codingwithmitch.foodrecipes.requests.RecipeApiClient;
-import com.codingwithmitch.foodrecipes.requests.Resource;
+import com.codingwithmitch.foodrecipes.requests.ServiceGenerator;
+import com.codingwithmitch.foodrecipes.requests.responses.ApiResponse;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
+import com.codingwithmitch.foodrecipes.util.Constants;
+import com.codingwithmitch.foodrecipes.util.NetworkBoundResource;
+import com.codingwithmitch.foodrecipes.util.Resource;
 
 import java.util.List;
+
+import retrofit2.Call;
 
 public class RecipeRepository {
 
     private static final String TAG = "RecipeRepository";
 
     private static RecipeRepository instance;
-    private RecipeApiClient mRecipeApiClient;
-    private RecipeCacheClient mRecipeCacheClient;
-    private RecipeDao mRecipeDao;
-    private String mQuery;
-    private int mPageNumber;
-    private MutableLiveData<Boolean> mIsQueryExhausted = new MutableLiveData<>();
-    private MediatorLiveData<List<Recipe>> mRecipes = new MediatorLiveData<>();
+    private RecipeDao recipeDao;
 
     public static RecipeRepository getInstance(Context context){
         if(instance == null){
@@ -38,107 +36,49 @@ public class RecipeRepository {
     }
 
     private RecipeRepository(Context context){
-        mRecipeDao = RecipeDatabase.getInstance(context).getRecipeDao();
-        mRecipeApiClient = RecipeApiClient.getInstance();
-        mRecipeCacheClient = RecipeCacheClient.getInstance();
-        initMediators();
+        recipeDao = RecipeDatabase.getInstance(context).getRecipeDao();
     }
 
-    private void initMediators(){
-        // add source for the recipe list API query in RecipeListActivity
-        final LiveData<List<Recipe>> recipeListApiSource = mRecipeApiClient.getRecipes();
-        mRecipes.addSource(recipeListApiSource, new Observer<List<Recipe>>() {
+    public LiveData<Resource<List<Recipe>>> searchRecipesApi(final String query, final int pageNumber){
+        return new NetworkBoundResource<List<Recipe>, RecipeSearchResponse>(AppExecutors.getInstance()){
+
             @Override
-            public void onChanged(@Nullable List<Recipe> recipes) {
-                //mRecipes.removeSource(recipeListApiSource); // **** Do I need this? ****
-                if(recipes != null){
-                    mRecipes.setValue(recipes);
-                    doneQuery(recipes);
-                }
-                else{
-                    // search database cache
-                    searchLocalCache(mQuery, mPageNumber);
+            public void saveCallResult(@NonNull RecipeSearchResponse item) {
+                if(item.getRecipes() != null){
+                    Recipe[] recipes = new Recipe[item.getRecipes().size()];
+                    recipeDao.insertRecipes((Recipe[])(item.getRecipes().toArray(recipes)));
                 }
             }
-        });
 
-        // add source for the recipe list CACHE query in RecipeListActivity
-        LiveData<List<Recipe>> recipeListCacheSource = mRecipeCacheClient.getRecipes();
-        mRecipes.addSource(recipeListCacheSource, new Observer<List<Recipe>>() {
             @Override
-            public void onChanged(@Nullable List<Recipe> recipes) {
-                mRecipes.setValue(recipes);
-                doneQuery(recipes); // can't be null from cache. It will return empty list
+            public boolean shouldFetch(@Nullable List<Recipe> data) {
+                return true; // always query the network since the queries can be anything
             }
-        });
-    }
 
-    private void doneQuery(List<Recipe> list){
-        if(list != null){
-            if (list.size() % 30 != 0 || list.size() == 0) {
-                mIsQueryExhausted.setValue(true);
+            @NonNull
+            @Override
+            public LiveData<List<Recipe>> loadFromDb() {
+                return recipeDao.searchRecipes(query, pageNumber);
             }
-        }
-        else{
-            mIsQueryExhausted.setValue(true);
-        }
+
+            @NonNull
+            @Override
+            public LiveData<ApiResponse<RecipeSearchResponse>> createCall() {
+                return ServiceGenerator.getRecipeApi().searchRecipe(
+                        Constants.API_KEY,
+                        query,
+                        String.valueOf(pageNumber)
+                );
+            }
+
+            @Override
+            public void onFetchFailed() {
+
+            }
+        }.getAsLiveData();
     }
 
-    public LiveData<Boolean> isQueryExhausted(){
-        return mIsQueryExhausted;
-    }
-
-    public LiveData<List<Recipe>> getRecipes(){
-        return mRecipes;
-    }
-
-//    // Room db is SINGLE SOURCE OF TRUTH for single Recipe
-//    public LiveData<Recipe> getRecipe(final String recipeId){
-//        return mRecipeApiClient.searchRecipeById(recipeId, mRecipeDao); // Refresh the recipe in room db
-//        return mRecipeDao.getRecipe(recipeId); // show the recipe from room db
-//    }
-
-    // Room db is SINGLE SOURCE OF TRUTH for single Recipe
-    public LiveData<Resource<Recipe>> getRecipe(final String recipeId){
-        return mRecipeApiClient.searchRecipeById(recipeId, mRecipeDao); // Refresh the recipe in room db
-    }
-
-    public LiveData<Boolean> isRecipeRequestTimedOut(){
-        return mRecipeApiClient.isRecipeRequestTimedOut();
-    }
-
-
-    public void searchRecipesApi(String query, int pageNumber){
-        if(pageNumber == 0){
-            pageNumber = 1;
-        }
-        mQuery = query;
-        mPageNumber = pageNumber;
-        mIsQueryExhausted.setValue(false);
-        mRecipeApiClient.searchRecipesApi(query, pageNumber);
-    }
-
-    public void searchNextPage(){
-        searchRecipesApi(mQuery, mPageNumber + 1);
-    }
-
-    public void cancelRequest(){
-        mRecipeApiClient.cancelRequest();
-    }
-
-
-
-    private void searchLocalCache(final String query, final int pageNumber){
-        mRecipeCacheClient.searchLocalCache(mRecipeDao, query, pageNumber);
-    }
 }
-
-
-
-
-
-
-
 
 
 

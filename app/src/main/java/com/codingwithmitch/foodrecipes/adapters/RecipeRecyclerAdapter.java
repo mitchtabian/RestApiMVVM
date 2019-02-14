@@ -17,7 +17,11 @@ import com.codingwithmitch.foodrecipes.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.codingwithmitch.foodrecipes.util.Constants.PAGINATION_NUMBER;
+
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final String TAG = "RecipeRecyclerAdapter";
 
     private static final int RECIPE_TYPE = 1;
     private static final int LOADING_TYPE = 2;
@@ -73,7 +77,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         int itemViewType = getItemViewType(i);
         if(itemViewType == RECIPE_TYPE){
             RequestOptions requestOptions = new RequestOptions()
-                    .placeholder(R.drawable.ic_launcher_background);
+                    .placeholder(R.drawable.white_background);
 
             Glide.with(viewHolder.itemView.getContext())
                     .setDefaultRequestOptions(requestOptions)
@@ -82,12 +86,13 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             ((RecipeViewHolder)viewHolder).title.setText(mRecipes.get(i).getTitle());
             ((RecipeViewHolder)viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
-            ((RecipeViewHolder)viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+//            ((RecipeViewHolder)viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
+            ((RecipeViewHolder)viewHolder).socialScore.setText(String.valueOf(i)); // Test the pagination
         }
         else if(itemViewType == CATEGORY_TYPE){
 
             RequestOptions requestOptions = new RequestOptions()
-                    .placeholder(R.drawable.ic_launcher_background);
+                    .placeholder(R.drawable.white_background);
 
             Uri path = Uri.parse("android.resource://com.codingwithmitch.foodrecipes/drawable/" + mRecipes.get(i).getImage_url());
             Glide.with(viewHolder.itemView.getContext())
@@ -101,27 +106,37 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     }
 
-    private static final String TAG = "adapter";
     @Override
     public int getItemViewType(int position) {
-        if(mRecipes != null){
-            if(mRecipes.get(position).getSocial_rank() == -1){
-                return CATEGORY_TYPE;
-            }
-            else if(mRecipes.get(position).getTitle().equals("LOADING...")){
-                return LOADING_TYPE;
-            }
-            else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
-                return EXHAUSTED_TYPE;
-            }
-            else if(position == mRecipes.size() - 1
-                    && position != 0
-                    && !mRecipes.get(position).getTitle().equals("EXHAUSTED...")){
-                return LOADING_TYPE;
-            }
-
+        if(mRecipes.get(position).getSocial_rank() == -1){
+            return CATEGORY_TYPE;
         }
-        return RECIPE_TYPE;
+        else if(mRecipes.get(position).getTitle().equals("LOADING...")){
+            return LOADING_TYPE;
+        }
+        else if(mRecipes.get(position).getTitle().equals("EXHAUSTED...")) {
+            return EXHAUSTED_TYPE;
+        }
+        else{
+            return RECIPE_TYPE;
+        }
+    }
+
+    public void displayLoading(){
+        if(mRecipes == null){
+            mRecipes = new ArrayList<>();
+        }
+        if(!isLoading()){
+            Recipe recipe = new Recipe();
+            recipe.setTitle("LOADING...");
+            if(mRecipes.size() < 30){
+                mRecipes.add(0, recipe); // loading at top of screen
+            }
+            else{
+                mRecipes.add(recipe); // loading at bottom of screen
+            }
+            notifyDataSetChanged();
+        }
     }
 
     public void setQueryExhausted(){
@@ -132,34 +147,25 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         notifyDataSetChanged();
     }
 
-    private void hideLoading(){
-        if(isLoading()){
-            for(Recipe recipe: mRecipes){
-                if(recipe.getTitle().equals("LOADING...")){
-                    mRecipes.remove(recipe);
-                }
+    public void hideLoading(){
+        if(isLoading()) {
+            if (mRecipes.get(0).getTitle().equals("LOADING...")) {
+                mRecipes.remove(mRecipes.size() - 1);
             }
-            notifyDataSetChanged();
         }
-    }
-
-    public void displayLoading(){
-        if(!isLoading()){
-            Recipe recipe = new Recipe();
-            recipe.setTitle("LOADING...");
-            List<Recipe> loadingList = new ArrayList<>();
-            loadingList.add(recipe);
-            mRecipes = loadingList;
-            notifyDataSetChanged();
+        if(isLoading()){
+            if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
+                mRecipes.remove(mRecipes.size() - 1);
+            }
         }
+        notifyDataSetChanged();
     }
 
     private boolean isLoading(){
         if(mRecipes != null){
             if(mRecipes.size() > 0){
-                if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
-                    return true;
-                }
+                return mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")
+                        || mRecipes.get(0).getTitle().equals("LOADING...");
             }
         }
         return false;
@@ -178,6 +184,7 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         notifyDataSetChanged();
     }
 
+
     @Override
     public int getItemCount() {
         if(mRecipes != null){
@@ -187,9 +194,15 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     public void setRecipes(List<Recipe> recipes){
-        mRecipes = recipes;
+        if(mRecipes == null){
+            mRecipes = new ArrayList<>();
+        }
+        mRecipes.clear();
+        mRecipes.addAll(recipes);
+        displayLoading();
         notifyDataSetChanged();
     }
+
 
     public Recipe getSelectedRecipe(int position){
         if(mRecipes != null){

@@ -1,6 +1,8 @@
 package com.codingwithmitch.foodrecipes.requests.responses;
 
 
+import android.util.Log;
+
 import java.io.IOException;
 
 import retrofit2.Response;
@@ -12,6 +14,7 @@ import retrofit2.Response;
  */
 public class ApiResponse<T> {
 
+    private static final String TAG = "ApiResponse";
 
     public ApiResponse<T> create(Throwable error){
         return new ApiErrorResponse<>(error.getMessage().equals("") ? error.getMessage() : "Unknown error");
@@ -65,7 +68,7 @@ public class ApiResponse<T> {
      * Generic Error response from API
      * @param <T>
      */
-    public class ApiErrorResponse<T> extends ApiResponse<T>{
+    public class ApiErrorResponse<T> extends ApiResponse<T> {
 
         private String errorMessage;
 
@@ -87,7 +90,7 @@ public class ApiResponse<T> {
     /**
      * separate class for HTTP 204 resposes so that we can make ApiSuccessResponse's body non-null.
      */
-    public class ApiEmptyResponse<T> extends ApiResponse<T>{ }
+    public class ApiEmptyResponse<T> extends ApiResponse<T> { }
 
 }
 
