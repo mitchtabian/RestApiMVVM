@@ -17,6 +17,12 @@ import android.view.View;
 import android.widget.Toast;
 
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.ListPreloader;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.util.ViewPreloadSizeProvider;
 import com.codingwithmitch.foodrecipes.adapters.OnRecipeListener;
 import com.codingwithmitch.foodrecipes.adapters.RecipeRecyclerAdapter;
 import com.codingwithmitch.foodrecipes.models.Recipe;
@@ -64,18 +70,28 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
                     if(listResource.data != null) {
                         switch (listResource.status) {
                             case LOADING: {
-                                Log.d(TAG, "onChanged: showing " + listResource.data.size() + " recipes from cache.");
-                                mAdapter.setRecipes(listResource.data);
+                                if(mRecipeListViewModel.getPageNumber() > 1){
+                                    mAdapter.displayLoading();
+                                }
+                                else{
+                                    mAdapter.displayOnlyLoading();
+                                }
                                 break;
                             }
                             case SUCCESS: {
-                                mAdapter.hideLoading();
                                 Log.d(TAG, "onChanged: cache has been refreshed.");
+                                Log.d(TAG, "onChanged: status: SUCCESS, #Recipes: " + listResource.data.size());
+                                mAdapter.hideLoading();
                                 mAdapter.setRecipes(listResource.data);
                                 break;
                             }
                             case ERROR: {
-                                Toast.makeText(RecipeListActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                                Log.e(TAG, "onChanged: cannot refresh cache.");
+                                Log.e(TAG, "onChanged: ERROR message: " + listResource.message );
+                                Log.e(TAG, "onChanged: status: ERROR, #Recipes: " + listResource.data.size());
+                                mAdapter.hideLoading();
+                                mAdapter.setRecipes(listResource.data);
+                                Toast.makeText(RecipeListActivity.this, listResource.message, Toast.LENGTH_SHORT).show();
                                 break;
                             }
                         }
@@ -116,11 +132,14 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
     }
 
     private void initRecyclerView(){
-        mAdapter = new RecipeRecyclerAdapter(this);
-        VerticalSpacingItemDecorator itemDecorator = new VerticalSpacingItemDecorator(30);
-        mRecyclerView.addItemDecoration(itemDecorator);
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ViewPreloadSizeProvider<String> viewPreloader = new ViewPreloadSizeProvider<>();
+        RequestOptions requestOptions = new RequestOptions()
+                    .placeholder(R.drawable.white_background);
+        RequestManager requestManager = Glide.with(this)
+                .setDefaultRequestOptions(requestOptions);
+        mAdapter = new RecipeRecyclerAdapter(this, viewPreloader, requestManager);
+        RecyclerViewPreloader<String> preloader = new RecyclerViewPreloader<String>(Glide.with(this), mAdapter, viewPreloader, 30);
+        mRecyclerView.addOnScrollListener(preloader);
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -133,6 +152,13 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
                 }
             }
         });
+
+        VerticalSpacingItemDecorator itemDecorator = new VerticalSpacingItemDecorator(30);
+        mRecyclerView.addItemDecoration(itemDecorator);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.setAdapter(mAdapter);
+
+
     }
 
     private void initSearchView(){
@@ -179,6 +205,7 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             super.onBackPressed();
         }
         else {
+            mRecipeListViewModel.cancelSearchRequest();
             mRecipeListViewModel.setViewCategories();
         }
     }

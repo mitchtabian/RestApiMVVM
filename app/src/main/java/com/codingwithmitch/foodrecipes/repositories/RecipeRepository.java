@@ -12,14 +12,13 @@ import com.codingwithmitch.foodrecipes.persistence.RecipeDao;
 import com.codingwithmitch.foodrecipes.persistence.RecipeDatabase;
 import com.codingwithmitch.foodrecipes.requests.ServiceGenerator;
 import com.codingwithmitch.foodrecipes.requests.responses.ApiResponse;
+import com.codingwithmitch.foodrecipes.requests.responses.RecipeResponse;
 import com.codingwithmitch.foodrecipes.requests.responses.RecipeSearchResponse;
 import com.codingwithmitch.foodrecipes.util.Constants;
 import com.codingwithmitch.foodrecipes.util.NetworkBoundResource;
 import com.codingwithmitch.foodrecipes.util.Resource;
 
 import java.util.List;
-
-import retrofit2.Call;
 
 public class RecipeRepository {
 
@@ -40,13 +39,28 @@ public class RecipeRepository {
     }
 
     public LiveData<Resource<List<Recipe>>> searchRecipesApi(final String query, final int pageNumber){
-        return new NetworkBoundResource<List<Recipe>, RecipeSearchResponse>(AppExecutors.getInstance()){
+        return new NetworkBoundResource<List<Recipe>, RecipeSearchResponse>(AppExecutors.getInstance() ){
 
             @Override
             public void saveCallResult(@NonNull RecipeSearchResponse item) {
-                if(item.getRecipes() != null){
+                if(item.getRecipes() != null){ // recipe list will be null if api key is expired
                     Recipe[] recipes = new Recipe[item.getRecipes().size()];
-                    recipeDao.insertRecipes((Recipe[])(item.getRecipes().toArray(recipes)));
+
+                    int index = 0;
+                    for(long rowId: recipeDao.insertRecipes((Recipe[])(item.getRecipes().toArray(recipes)))){
+                        if(rowId == -1){ // conflict detected
+                            Log.d(TAG, "saveCallResult: CONFLICT... This recipe is already in cache.");
+                            // if already exists, I don't want to set the ingredients or timestamp b/c they will be erased
+                            recipeDao.updateRecipe(
+                                    recipes[index].getRecipe_id(),
+                                    recipes[index].getTitle(),
+                                    recipes[index].getPublisher(),
+                                    recipes[index].getImage_url(),
+                                    recipes[index].getSocial_rank()
+                            );
+                        }
+                        index++;
+                    }
                 }
             }
 
@@ -75,6 +89,60 @@ public class RecipeRepository {
             public void onFetchFailed() {
 
             }
+        }.getAsLiveData();
+    }
+
+
+    public LiveData<Resource<Recipe>> searchRecipeApi(final String recipeId){
+        return new NetworkBoundResource<Recipe, RecipeResponse>(AppExecutors.getInstance()){
+
+            @Override
+            public void saveCallResult(@NonNull RecipeResponse item) {
+
+                // Recipe will be NULL if API key is expired
+                if(item.getRecipe() != null){
+                    item.getRecipe().setTimestamp((int)(System.currentTimeMillis() / 1000)); // save time in seconds
+                    recipeDao.insertRecipe(item.getRecipe());
+                }
+            }
+
+            @Override
+            public boolean shouldFetch(@Nullable Recipe data) {
+                Log.d(TAG, "shouldFetch: recipe: " + data.toString());
+                int currentTime = (int)(System.currentTimeMillis() / 1000);
+                Log.d(TAG, "shouldFetch: current time: " + currentTime);
+                int lastRefresh = data.getTimestamp();
+                Log.d(TAG, "shouldFetch: last refresh: " + lastRefresh);
+                Log.d(TAG, "shouldFetch: it's been " + (currentTime - lastRefresh) 
+                        + " seconds since this recipe was refreshed. 30 days must elapse.");
+                if(((System.currentTimeMillis() / 1000) - data.getTimestamp()) >= Constants.RECIPE_REFRESH_TIME){
+                    Log.d(TAG, "shouldFetch: SHOULD REFRESH RECIPE? " + true);
+                    return true;
+                }
+                Log.d(TAG, "shouldFetch: SHOULD REFRESH RECIPE? " + false);
+                return false;
+            }
+
+            @NonNull
+            @Override
+            public LiveData<Recipe> loadFromDb() {
+                return recipeDao.getRecipe(recipeId);
+            }
+
+            @NonNull
+            @Override
+            public LiveData<ApiResponse<RecipeResponse>> createCall() {
+                return ServiceGenerator.getRecipeApi().getRecipe(
+                        Constants.API_KEY,
+                        recipeId
+                );
+            }
+
+            @Override
+            public void onFetchFailed() {
+
+            }
+
         }.getAsLiveData();
     }
 

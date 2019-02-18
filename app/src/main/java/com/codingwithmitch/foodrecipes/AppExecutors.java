@@ -21,13 +21,7 @@ public class AppExecutors {
 
     private final Executor mDiskIO = Executors.newSingleThreadExecutor(); // Will not use additional threads
 
-    private final ScheduledExecutorService mNetworkIO = Executors.newScheduledThreadPool(3); // can use additional threads
-
     private final Executor mMainThreadExecutor = new MainThreadExecutor(); // executes on main thread
-
-    public ScheduledExecutorService networkIO(){
-        return mNetworkIO;
-    }
 
     public Executor diskIO() {
         return mDiskIO;

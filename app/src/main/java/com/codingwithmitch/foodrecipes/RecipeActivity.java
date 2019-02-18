@@ -11,10 +11,12 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.codingwithmitch.foodrecipes.models.Recipe;
+import com.codingwithmitch.foodrecipes.util.Resource;
 import com.codingwithmitch.foodrecipes.viewmodels.RecipeViewModel;
 
 public class RecipeActivity extends BaseActivity {
@@ -42,8 +44,6 @@ public class RecipeActivity extends BaseActivity {
 
         mRecipeViewModel = ViewModelProviders.of(this).get(RecipeViewModel.class);
 
-        showProgressBar(true);
-        subscribeObservers();
         getIncomingIntent();
     }
 
@@ -51,12 +51,48 @@ public class RecipeActivity extends BaseActivity {
         if(getIntent().hasExtra("recipe")){
             Recipe recipe = getIntent().getParcelableExtra("recipe");
             Log.d(TAG, "getIncomingIntent: " + recipe.getTitle());
-
+            Log.d(TAG, "getIncomingIntent: " + recipe.getTimestamp());
+            subscribeObservers(recipe.getRecipe_id());
+        }
+        else{
+            displayErrorScreen("Unknown recipe");
+            showParent();
         }
     }
 
-    private void subscribeObservers(){
-
+    private void subscribeObservers(final String recipeId){
+        mRecipeViewModel.searchRecipeApi(recipeId).observe(this, new Observer<Resource<Recipe>>() {
+            @Override
+            public void onChanged(@Nullable Resource<Recipe> recipeResource) {
+                if(recipeResource != null){
+                    if(recipeResource.data != null) {
+                        switch (recipeResource.status) {
+                            case LOADING: {
+                                showProgressBar(true);
+                                break;
+                            }
+                            case SUCCESS: {
+                                Log.d(TAG, "onChanged: cache has been refreshed.");
+                                Log.d(TAG, "onChanged: status: SUCCESS, Recipe: " + recipeResource.data.getTitle());
+                                showParent();
+                                showProgressBar(false);
+                                setRecipeProperties(recipeResource.data);
+                                break;
+                            }
+                            case ERROR: {
+                                Log.e(TAG, "onChanged: status: ERROR, Recipe: " + recipeResource.data.getTitle());
+                                Log.e(TAG, "onChanged: status: ERROR message: " + recipeResource.message);
+                                Toast.makeText(RecipeActivity.this, recipeResource.message, Toast.LENGTH_SHORT).show();
+                                showParent();
+                                showProgressBar(false);
+                                setRecipeProperties(recipeResource.data);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     private void displayErrorScreen(String errorMessage){
@@ -76,21 +112,18 @@ public class RecipeActivity extends BaseActivity {
         mRecipeIngredientsContainer.addView(textView);
 
         RequestOptions requestOptions = new RequestOptions()
-                .placeholder(R.drawable.ic_launcher_background);
+                .placeholder(R.drawable.ic_error_outline_black_24dp);
 
         Glide.with(this)
                 .setDefaultRequestOptions(requestOptions)
-                .load(R.drawable.ic_launcher_background)
+                .load(R.drawable.ic_error_outline_black_24dp)
                 .into(mRecipeImage);
-
-        showParent();
-        showProgressBar(false);
     }
 
     private void setRecipeProperties(Recipe recipe){
         if(recipe != null){
             RequestOptions requestOptions = new RequestOptions()
-                    .placeholder(R.drawable.ic_launcher_background);
+                    .placeholder(R.drawable.white_background);
 
             Glide.with(this)
                     .setDefaultRequestOptions(requestOptions)
@@ -100,7 +133,16 @@ public class RecipeActivity extends BaseActivity {
             mRecipeTitle.setText(recipe.getTitle());
             mRecipeRank.setText(String.valueOf(Math.round(recipe.getSocial_rank())));
 
-            mRecipeIngredientsContainer.removeAllViews();
+            setIngredients(recipe);
+        }
+    }
+
+    private void setIngredients(Recipe recipe){
+        mRecipeIngredientsContainer.removeAllViews();
+
+        // Recipe can have null ingredients if user has never visited RecipeActivity for this
+        // particular recipe
+        if(recipe.getIngredients() != null){
             for(String ingredient: recipe.getIngredients()){
                 TextView textView = new TextView(this);
                 textView.setText(ingredient);
@@ -111,9 +153,15 @@ public class RecipeActivity extends BaseActivity {
                 mRecipeIngredientsContainer.addView(textView);
             }
         }
-
-        showParent();
-        showProgressBar(false);
+        else{
+            TextView textView = new TextView(this);
+            textView.setText("Error retrieving ingredients.\n\nCheck network connection.");
+            textView.setTextSize(15);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            mRecipeIngredientsContainer.addView(textView);
+        }
     }
 
     private void showParent(){

@@ -3,6 +3,8 @@ package com.codingwithmitch.foodrecipes.requests.responses;
 
 import android.util.Log;
 
+import com.codingwithmitch.foodrecipes.util.CheckRecipeApiKey;
+
 import java.io.IOException;
 
 import retrofit2.Response;
@@ -17,12 +19,36 @@ public class ApiResponse<T> {
     private static final String TAG = "ApiResponse";
 
     public ApiResponse<T> create(Throwable error){
-        return new ApiErrorResponse<>(error.getMessage().equals("") ? error.getMessage() : "Unknown error");
+        Log.d(TAG, "create: " + error.getMessage());
+        Log.d(TAG, "create: " + error.getCause());
+        Log.d(TAG, "create: " + error.getLocalizedMessage());
+        Log.d(TAG, "create: " + error.fillInStackTrace());
+        for(Throwable throwable: error.getSuppressed()){
+            Log.d(TAG, "create: " + throwable.getMessage());
+        }
+        return new ApiErrorResponse<>(error.getMessage().equals("") ? error.getMessage() : "Unknown error\nCheck network connection");
     }
 
     public ApiResponse<T> create(Response<T> response){
+
         if(response.isSuccessful()){
             T body = response.body();
+
+            // make sure api key is valid and not expired
+            if(body instanceof RecipeSearchResponse){
+                if(!CheckRecipeApiKey.isRecipeApiKeyValid((RecipeSearchResponse)body)){
+                    String errorMsg = "Api key invalid or expired.";
+                    return new ApiErrorResponse<>(errorMsg);
+                }
+            }
+            else if(body instanceof RecipeResponse){
+                if(!CheckRecipeApiKey.isRecipeApiKeyValid((RecipeResponse)body)){
+                    String errorMsg = "Api key invalid or expired.";
+                    return new ApiErrorResponse<>(errorMsg);
+                }
+            }
+
+
             if(body == null || response.code() == 204){ // 204 is empty response
                 return new ApiEmptyResponse<>();
             }
@@ -58,10 +84,6 @@ public class ApiResponse<T> {
             return body;
         }
 
-        public void setBody(T body) {
-            this.body = body;
-        }
-
     }
 
     /**
@@ -78,10 +100,6 @@ public class ApiResponse<T> {
 
         public String getErrorMessage() {
             return errorMessage;
-        }
-
-        public void setErrorMessage(String errorMessage) {
-            this.errorMessage = errorMessage;
         }
 
     }

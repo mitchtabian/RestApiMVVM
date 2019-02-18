@@ -22,7 +22,7 @@ public interface RecipeApi {
 
     // GET RECIPE REQUEST
     @GET("api/get")
-    Call<RecipeResponse> getRecipe(
+    LiveData<ApiResponse<RecipeResponse>> getRecipe(
             @Query("key") String key,
             @Query("rId") String recipe_id
     );
